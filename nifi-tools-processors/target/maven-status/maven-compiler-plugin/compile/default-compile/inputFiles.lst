@@ -1,0 +1,15 @@
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/JSONSParseRecord.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/ot_constants.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/AbstractRecordProcessorWithSchemaUpdates.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/RecordEditSchema.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/BloomFilterCalculator.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/MergeRecordNoAvro.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/KVParseRecord.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/ListenTCPRecordWithDump.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/ParquetHDFSRecordWriter.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/StringSegmenter.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/utils/ParquetUtils.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/utils/ParquetConfig.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/PutParquetNoAvro.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/AddRaw.java
+/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/src/main/java/com/isgneuro/etl/nifi/processors/JSONParseRecord.java
