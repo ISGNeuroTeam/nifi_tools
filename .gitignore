@@ -7,3 +7,5 @@
 *.idea
 *.project
 *.plxarc
+/.settings
+/target
