@@ -20,22 +20,25 @@ Contains processors:
 9. RecordEditSchema
 
 
-### Installing
-
-1. Put .nar file from nifi-tools-nar/target/ to lib directory
-2. Restart Ni-Fi
-
 ### Prerequisites
 
 * Java JRE 1.8
-* Apache Ni-Fi 1.15.3
-* Eclipse IDE with m2e plugin
+* Maven (https://maven.apache.org/) - Dependency Management
 * Maven catalog with Apache Ni-Fi archetype (https://repo.maven.apache.org/maven2/archetype-catalog.xml)
+* Apache Ni-Fi 1.15.3
 
-## Built With
+### Built With
 
-* [Maven](https://maven.apache.org/) - Dependency Management
+* Eclipse IDE with m2e plugin
+
+## Building
 
 ```
 mvn clean install -X
 ```
+
+### Deployment
+
+1. Put .nar file from nifi-tools-nar/target/ to lib directory in NIFI_HOME
+2. Restart Ni-Fi
+
