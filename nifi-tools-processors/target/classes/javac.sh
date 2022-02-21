@@ -1,0 +1,1 @@
+/bin/sh -c cd /home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors && /usr/lib/jvm/jdk1.8.0_202/jre/../bin/javac @/home/nizam/eclipse-workspace/nifi_tools/nifi-tools-processors/target/classes/org.codehaus.plexus.compiler.javac.JavacCompiler4573079129444790993arguments
