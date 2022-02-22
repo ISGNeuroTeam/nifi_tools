@@ -367,7 +367,7 @@ public class ListenTCPRecordWithDump extends AbstractProcessor {
 						new File(pathToDump + "/" + nodeHostname).mkdir();
 				}
 
-				final RecordSchema recordSchema = recordSetWriterFactory.getSchema(Collections.EMPTY_MAP,
+				final RecordSchema recordSchema = recordSetWriterFactory.getSchema(Collections.emptyMap(),
 						record.getSchema());
 				try (final OutputStream out = session.write(flowFile);
 						final RecordSetWriter recordWriter = recordSetWriterFactory.createWriter(getLogger(),
