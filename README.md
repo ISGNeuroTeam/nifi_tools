@@ -37,6 +37,15 @@ Contains processors:
 mvn clean install -X
 ```
 
+Create using
+
+mvn archetype:generate
+	-DarchetypeGroupId=org.apache.nifi  
+	-DarchetypeArtifactId=nifi-processor-bundle-archetype  
+	-DarchetypeVersion=<NiFi Version>   
+	-DnifiVersion=<NiFi Version>
+
+
 ### Deployment
 
 1. Put .nar file from nifi-tools-nar/target/ to lib directory in NIFI_HOME

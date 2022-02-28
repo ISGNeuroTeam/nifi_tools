@@ -130,25 +130,22 @@ public class RecordEditSchema extends AbstractProcessor {
     public void createRecordPaths(final ProcessContext context) {
         recordPathCache = new RecordPathCache(context.getProperties().size() * 2);
 
-        final Map<String,DataType> recordPaths = new HashMap<>(context.getProperties().size() - 2);
-        for (final Map.Entry<PropertyDescriptor,String> property : context.getProperties().entrySet()) {
+		final Map<String, DataType> recordPaths = new HashMap<>(context.getProperties().size() - 2);
+		for (final Map.Entry<PropertyDescriptor, String> property : context.getProperties().entrySet()) {
             if (property.getKey().isDynamic()) {
-                String val= property.getValue();
-                DataType dval;
-                if (val.equals("drop") || val.equals("")){
-                    dval=null;
-                }
-                else {
-                    dval= RecordFieldType.valueOf(val.toUpperCase()).getDataType();
-                }
-
-                recordPaths.put(recordPathCache.getCompiled(property.getKey().getName()).getPath().replaceFirst("/",""),dval);
-                //recordPaths.put(property.getKey().getName(),dval);
+                String val = property.getValue();
+				DataType field_type;
+				if (val.equals("drop") || val.equals("")) {
+					field_type = null;
+				} else {
+					field_type = RecordFieldType.valueOf(val.toUpperCase()).getDataType();
+				}
+				recordPaths.put(recordPathCache.getCompiled(property.getKey().getName()).getPath().replaceFirst("/", ""), field_type);
+                //recordPaths.put(property.getKey().getName(), dval);
             }
         }
-
-        this.Fields = recordPaths;
-        getLogger().debug("Pathes: {}",new Object[]{recordPaths});
+		this.Fields = recordPaths;
+		getLogger().debug("Pathes: {}", new Object[] { recordPaths });
     }
 
     @Override
@@ -157,64 +154,57 @@ public class RecordEditSchema extends AbstractProcessor {
         if (flowFile == null) {
             return;
         }
-
+        final FlowFile original = flowFile;
+        final Map<String, String> originalAttributes = flowFile.getAttributes();
+        final Map<String, String> attributes = new HashMap<>();
+        final AtomicInteger recordCount = new AtomicInteger();
+        
         final RecordReaderFactory readerFactory = context.getProperty(RECORD_READER).asControllerService(RecordReaderFactory.class);
         final RecordSetWriterFactory writerFactory = context.getProperty(RECORD_WRITER).asControllerService(RecordSetWriterFactory.class);
         final boolean includeZeroRecordFlowFiles = context.getProperty(INCLUDE_ZERO_RECORD_FLOWFILES).isSet()? context.getProperty(INCLUDE_ZERO_RECORD_FLOWFILES).asBoolean():true;
-
-        final Map<String, String> attributes = new HashMap<>();
-        final AtomicInteger recordCount = new AtomicInteger();
-
-        final FlowFile original = flowFile;
-        final Map<String, String> originalAttributes = flowFile.getAttributes();
+        
         try {
             flowFile = session.write(flowFile, new StreamCallback() {
                 @Override
-                public void process(final InputStream in, final OutputStream out) throws IOException {
+				public void process(final InputStream in, final OutputStream out) throws IOException {
 
-                    try (final RecordReader reader = readerFactory.createRecordReader(originalAttributes, in, original.getSize(), getLogger())) {
+					try (final RecordReader reader = readerFactory.createRecordReader(originalAttributes, in, original.getSize(), getLogger())) {
+						final RecordSchema writeSchema = writerFactory.getSchema(originalAttributes, processSchema(reader.getSchema()));
+						// Get the first record and process it before we create the Record Writer. We do this so that if the Processor
+						// updates the Record's schema, we can provide an updated schema to the Record Writer. If there are no records,
+						// then we can simply create the Writer with the Reader's schema and begin & end the Record Set.
+						Record firstRecord = reader.nextRecord();
+						if (firstRecord == null) {
+							try (final RecordSetWriter writer = writerFactory.createWriter(getLogger(), writeSchema, out, originalAttributes)) {
+								writer.beginRecordSet();
+								final WriteResult writeResult = writer.finishRecordSet();
+								attributes.put("record.count", String.valueOf(writeResult.getRecordCount()));
+								attributes.put(CoreAttributes.MIME_TYPE.key(), writer.getMimeType());
+								attributes.putAll(writeResult.getAttributes());
+								recordCount.set(writeResult.getRecordCount());
+							}
+							return;
+						}
 
-                        final RecordSchema writeSchema = writerFactory.getSchema(originalAttributes, processSchema(reader.getSchema()));
-
-                        // Get the first record and process it before we create the Record Writer. We do this so that if the Processor
-                        // updates the Record's schema, we can provide an updated schema to the Record Writer. If there are no records,
-                        // then we can simply create the Writer with the Reader's schema and begin & end the Record Set.
-                        Record firstRecord = reader.nextRecord();
-                        if (firstRecord == null) {
-                            try (final RecordSetWriter writer = writerFactory.createWriter(getLogger(), writeSchema, out, originalAttributes)) {
-                                writer.beginRecordSet();
-
-                                final WriteResult writeResult = writer.finishRecordSet();
-                                attributes.put("record.count", String.valueOf(writeResult.getRecordCount()));
-                                attributes.put(CoreAttributes.MIME_TYPE.key(), writer.getMimeType());
-                                attributes.putAll(writeResult.getAttributes());
-                                recordCount.set(writeResult.getRecordCount());
-                            }
-
-                            return;
-                        }
-
-                            try(final RecordSetWriter writer = writerFactory.createWriter(getLogger(), writeSchema, out, originalAttributes)){
-                            writer.beginRecordSet();
-                            writer.write(firstRecord);
-
-                            Record record;
-                            while ((record = reader.nextRecord()) != null){
-                                writer.write(record);
-                            }
-
-                            final WriteResult writeResult = writer.finishRecordSet();
-                            attributes.put("record.count", String.valueOf(writeResult.getRecordCount()));
-                            attributes.put(CoreAttributes.MIME_TYPE.key(), writer.getMimeType());
-                            attributes.putAll(writeResult.getAttributes());
-                            recordCount.set(writeResult.getRecordCount());
-                        }
-                    } catch (final SchemaNotFoundException e) {
-                        throw new ProcessException(e.getLocalizedMessage(), e);
-                    } catch (final MalformedRecordException e) {
-                        throw new ProcessException("Could not parse incoming data", e);
-                    }
-                }
+						try (final RecordSetWriter writer = writerFactory.createWriter(getLogger(), writeSchema, out, originalAttributes)) {
+							writer.beginRecordSet();
+							writer.write(firstRecord);
+							Record record;
+							while ((record = reader.nextRecord()) != null) {
+								writer.write(record);
+							}
+							final WriteResult writeResult = writer.finishRecordSet();
+							attributes.put("record.count", String.valueOf(writeResult.getRecordCount()));
+							attributes.put(CoreAttributes.MIME_TYPE.key(), writer.getMimeType());
+							attributes.putAll(writeResult.getAttributes());
+							recordCount.set(writeResult.getRecordCount());
+						}
+					} catch (final SchemaNotFoundException e) {
+						throw new ProcessException(e.getLocalizedMessage(), e);
+					} catch (final MalformedRecordException e) {
+						throw new ProcessException("Could not parse incoming data", e);
+					}
+				}
             });
         } catch (final Exception e) {
             getLogger().error("Failed to process {}; will route to failure", new Object[] {flowFile, e});
@@ -235,36 +225,36 @@ public class RecordEditSchema extends AbstractProcessor {
     }
 
     public RecordSchema processSchema(RecordSchema inschema){
-        final List<RecordField> outfields=new ArrayList<>();
-        Map<String,DataType> runfields=new HashMap<>(Fields);
+		final List<RecordField> outfields = new ArrayList<>();
+		Map<String, DataType> runfields = new HashMap<>(Fields);
 
-        getLogger().debug("Fields: {}",new Object[]{Fields});
-        for (RecordField inf:inschema.getFields()){
-            String fn=inf.getFieldName();
-            getLogger().debug("Field: {}",new Object[]{fn});
+		getLogger().debug("Fields: {}", new Object[] { Fields });
+		for (RecordField inf : inschema.getFields()) {
+			String fn = inf.getFieldName();
+			getLogger().debug("Field: {}", new Object[] { fn });
 
-            if (runfields.containsKey(fn)) {
-                DataType ft=runfields.get(fn);
-                runfields.remove(fn);
-                if (ft==null)continue;
-                getLogger().debug("Add field:{}={}",new Object[]{fn,ft});
-                outfields.add(new RecordField(fn,ft,true));
-            }
-            else {
-                outfields.add(inf);
-            }
-        }
+			if (runfields.containsKey(fn)) {
+				DataType ft = runfields.get(fn);
+				runfields.remove(fn);
+				if (ft == null)
+					continue;
+				getLogger().debug("Add field:{}={}", new Object[] { fn, ft });
+				outfields.add(new RecordField(fn, ft, true));
+			} else {
+				outfields.add(inf);
+			}
+		}
 
-        for (Map.Entry<String,DataType> f:runfields.entrySet()){
-            if (f!=null){
-                getLogger().debug("Add field:{}",new Object[]{f});
-                outfields.add(new RecordField(f.getKey(),f.getValue(),true));
-            }
-        }
+		for (Map.Entry<String, DataType> f : runfields.entrySet()) {
+			if (f != null) {
+				getLogger().debug("Add field:{}", new Object[] { f });
+				outfields.add(new RecordField(f.getKey(), f.getValue(), true));
+			}
+		}
 
-        RecordSchema resschema=new SimpleRecordSchema(outfields);
-        getLogger().debug("Old Schema:{}\nNew Schema:{}",new Object[]{inschema,resschema});
+		RecordSchema resschema = new SimpleRecordSchema(outfields);
+		getLogger().debug("Old Schema:{}\nNew Schema:{}", new Object[] { inschema, resschema });
 
-        return resschema;
+		return resschema;
     }
 }

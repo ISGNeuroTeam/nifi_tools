@@ -3,7 +3,7 @@ com/isgneuro/etl/nifi/processors/JSONSParseRecord$1.class
 com/isgneuro/etl/nifi/processors/MergeRecordNoAvro.class
 com/isgneuro/etl/nifi/processors/BloomFilterCalculator$BloomWithStopWatch.class
 com/isgneuro/etl/nifi/processors/RecordEditSchema$1.class
-org.codehaus.plexus.compiler.javac.JavacCompiler2921125430693962251arguments
+org.codehaus.plexus.compiler.javac.JavacCompiler6133511907189385801arguments
 com/isgneuro/etl/nifi/processors/StringSegmenter.class
 com/isgneuro/etl/nifi/processors/AbstractRecordProcessorWithSchemaUpdates.class
 com/isgneuro/etl/nifi/processors/PutParquetNoAvro.class

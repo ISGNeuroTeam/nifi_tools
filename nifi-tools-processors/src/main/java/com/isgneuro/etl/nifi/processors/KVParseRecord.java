@@ -15,7 +15,6 @@ import org.apache.nifi.components.ValidationResult;
 import org.apache.nifi.expression.ExpressionLanguageScope;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.processor.ProcessContext;
-//import org.apache.nifi.processors.standard.ConvertRecord;
 import org.apache.nifi.record.path.FieldValue;
 import org.apache.nifi.record.path.RecordPath;
 import org.apache.nifi.record.path.RecordPathResult;
@@ -45,19 +44,19 @@ import java.util.stream.Collectors;
     + "This Processor requires that at least one user-defined Property be added. The name of the Property should indicate a RecordPath that determines the field that should "
     + "be updated. The value of the Property is either a replacement value (optionally making use of the Expression Language) or is itself a RecordPath that extracts a value from "
     + "the Record. Whether the Property value is determined to be a RecordPath or a literal value depends on the configuration of the <Replacement Value Strategy> Property.")
-//@SeeAlso({ConvertRecord.class})
+
 public class KVParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
-    private static final String FIELD_NAME = "field.name";
-    private static final String FIELD_VALUE = "field.value";
-    private static final String FIELD_TYPE = "field.type";
+	private static final String FIELD_NAME = "field.name";
+	private static final String FIELD_VALUE = "field.value";
+	private static final String FIELD_TYPE = "field.type";
 
-    private Pattern Pair_pat=null;
-    private Pattern KV_pat=null;
-    private final Pattern quot=Pattern.compile("\"(?<value>.+)\"$");
-    private final Pattern GetLastWorld=Pattern.compile("^.*?\\W*(\\w\\S+)$");
+	private Pattern Pair_pat = null;
+	private Pattern KV_pat = null;
+	private final Pattern quot = Pattern.compile("\"(?<value>.+)\"$");
+	private final Pattern GetLastWorld = Pattern.compile("^.*?\\W*(\\w\\S+)$");
 
-    private volatile RecordPathCache recordPathCache;
-    private volatile List<String> recordPaths;
+	private volatile RecordPathCache recordPathCache;
+	private volatile List<String> recordPaths;
 
     static final AllowableValue PARENT_FIELD_PREFIX_SET = new AllowableValue("true","true",
             "Set prefix of child fields as parent field name");
@@ -170,26 +169,26 @@ public class KVParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
             .build());
     }
 
-    @OnScheduled
-    public void createRecordPaths(final ProcessContext context) {
-        recordPathCache = new RecordPathCache(context.getProperties().size() * 2);
-        final String kvcon="(?:"+context.getProperty(KVCON).getValue()+")";
-        final String separator=context.getProperty(KVSEP).getValue();
-        final String maxfieldlength=context.getProperty(MAXVALLEN).getValue();
+	@OnScheduled
+	public void createRecordPaths(final ProcessContext context) {
+		recordPathCache = new RecordPathCache(context.getProperties().size() * 2);
+		final String kvcon = "(?:" + context.getProperty(KVCON).getValue() + ")";
+		final String separator = context.getProperty(KVSEP).getValue();
+		final String maxfieldlength = context.getProperty(MAXVALLEN).getValue();
 
-        final List<String> recordPaths = new ArrayList<>(context.getProperties().size() - 2);
-        for (final PropertyDescriptor property : context.getProperties().keySet()) {
-            if (property.isDynamic()) {
-                recordPaths.add(property.getName());
-            }
-        }
+		final List<String> recordPaths = new ArrayList<>(context.getProperties().size() - 2);
+		for (final PropertyDescriptor property : context.getProperties().keySet()) {
+			if (property.isDynamic()) {
+				recordPaths.add(property.getName());
+			}
+		}
 
-        this.recordPaths = recordPaths;
+		this.recordPaths = recordPaths;
 
-        Pair_pat=Pattern.compile("(?ms)(?<="+kvcon+"\\s{0,100}([^\"\\s]{0,"+maxfieldlength+
-                        "}?|(\".{0,"+maxfieldlength+"}\")))"+separator);
-        KV_pat=Pattern.compile("(?ms)\\s*"+kvcon+"\\s*");
-    }
+		Pair_pat = Pattern.compile("(?ms)(?<=" + kvcon + "\\s{0,100}([^\"\\s]{0," + maxfieldlength + "}?|(\".{0,"
+				+ maxfieldlength + "}\")))" + separator);
+		KV_pat = Pattern.compile("(?ms)\\s*" + kvcon + "\\s*");
+	}
 
     @Override
     protected Record process(Record record, final FlowFile flowFile, final ProcessContext context) {
@@ -197,10 +196,10 @@ public class KVParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
         //final String kvcon="(?:"+context.getProperty(KVCON).getValue()+")";
         //final String separator=context.getProperty(KVSEP).getValue();
         //final String maxfieldlength=context.getProperty(MAXVALLEN).getValue();
-        final Integer maxinputlength=Integer.parseInt(context.getProperty(MAXINPUTLEN).getValue());
-        final boolean do_encode_keys=context.getProperty(ENCODE_KEYS).getValue().equals(ENCODE_KEYS_SET.getValue());
+		final Integer maxinputlength = Integer.parseInt(context.getProperty(MAXINPUTLEN).getValue());
+		final boolean do_encode_keys = context.getProperty(ENCODE_KEYS).getValue().equals(ENCODE_KEYS_SET.getValue());
 
-        final List<RecordField> newfields=new ArrayList<>();
+        final List<RecordField> newfields = new ArrayList<>();
 
         //        final Pattern kvpat = Pattern.compile("(?ms)(?:^|" + separator + ")" +
 //                "(?:(?:\"(?<key>[^\"]*?(?:(?:\\\\\")*?[^\"]*?)*?[^\\\\])\")|(?<key1>[^\"\\s]*?))\\s*"

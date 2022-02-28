@@ -46,24 +46,23 @@ import javax.json.stream.JsonParser;
     + "the Record. Whether the Property value is determined to be a RecordPath or a literal value depends on the configuration of the <Replacement Value Strategy> Property.")
 //@SeeAlso({ConvertRecord.class})
 public class JSONSParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
-    private static final String FIELD_NAME = "field.name";
-    private static final String FIELD_VALUE = "field.value";
-    private static final String FIELD_TYPE = "field.type";
+	private static final String FIELD_NAME = "field.name";
+	private static final String FIELD_VALUE = "field.value";
+	private static final String FIELD_TYPE = "field.type";
 
-    private final Pattern kvpat = Pattern.compile("(?ms)^[^\\{\\[]*(?<json>[\\{\\[].+)$");
-    private Pattern mjson_pat=null;
-    private Pattern jsonsep_pat=null;
-    private final Pattern new_line = Pattern.compile("\n");
-    private final Pattern tab = Pattern.compile("\t");
-    //private final Pattern SplunkPar= Pattern.compile("\\[\\\\\"([^\\[\\]]+?)\\\\\"\\]");
-    private int maxdepth=-1;
-    private boolean remove_ilchar=true;
-    private boolean splunk_style=false;
-    private boolean set_child_fields_prefix=false;
-    private boolean do_encode_keys=false;
-    private boolean do_multijson=true;
-    private boolean overdepthastext=true;
-
+	private final Pattern kvpat = Pattern.compile("(?ms)^[^\\{\\[]*(?<json>[\\{\\[].+)$");
+	private Pattern mjson_pat = null;
+	private Pattern jsonsep_pat = null;
+	private final Pattern new_line = Pattern.compile("\n");
+	private final Pattern tab = Pattern.compile("\t");
+	// private final Pattern SplunkPar=Pattern.compile("\\[\\\\\"([^\\[\\]]+?)\\\\\"\\]");
+	private int maxdepth = -1;
+	private boolean remove_ilchar = true;
+	private boolean splunk_style = false;
+	private boolean set_child_fields_prefix = false;
+	private boolean do_encode_keys = false;
+	private boolean do_multijson = true;
+	private boolean overdepthastext = true;
 
     private volatile RecordPathCache recordPathCache;
     private volatile List<String> recordPaths;

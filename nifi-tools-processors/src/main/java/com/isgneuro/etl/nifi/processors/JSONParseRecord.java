@@ -53,15 +53,15 @@ public class JSONParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
     private static final String FIELD_VALUE = "field.value";
     private static final String FIELD_TYPE = "field.type";
 
-    private final Pattern kvpat = Pattern.compile("(?ms)^[^\\{]*(?<json>\\{.+\\})[^\\}]*$");
-    private Pattern mjson_pat=null;
-    private Pattern jsonsep_pat=null;
-    private final Pattern new_line = Pattern.compile("\n");
-    private final Pattern tab = Pattern.compile("\t");
-    private final Pattern SplunkPar= Pattern.compile("\\[\\\\\"([^\\[\\]]+?)\\\\\"\\]");
-    private final Pattern SplunkParL= Pattern.compile("\\[\\\\\"");
-    private final Pattern SplunkParR= Pattern.compile("\\\\\"\\]");
-    private int maxdepth=-1;
+	private final Pattern kvpat = Pattern.compile("(?ms)^[^\\{]*(?<json>\\{.+\\})[^\\}]*$");
+	private Pattern mjson_pat = null;
+	private Pattern jsonsep_pat = null;
+	private final Pattern new_line = Pattern.compile("\n");
+	private final Pattern tab = Pattern.compile("\t");
+	private final Pattern SplunkPar = Pattern.compile("\\[\\\\\"([^\\[\\]]+?)\\\\\"\\]");
+	private final Pattern SplunkParL = Pattern.compile("\\[\\\\\"");
+	private final Pattern SplunkParR = Pattern.compile("\\\\\"\\]");
+	private int maxdepth = -1;
 
     private volatile RecordPathCache recordPathCache;
     private volatile List<String> recordPaths;
