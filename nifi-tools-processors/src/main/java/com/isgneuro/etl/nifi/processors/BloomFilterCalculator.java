@@ -1,5 +1,6 @@
 package com.isgneuro.etl.nifi.processors;
 
+import org.apache.nifi.annotation.behavior.TriggerWhenEmpty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -37,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-//@TriggerSerially
+@TriggerWhenEmpty
 @InputRequirement(InputRequirement.Requirement.INPUT_REQUIRED)
 @Tags({"Attribute Expression Language", "state", "data science", "session", "window"})
 @CapabilityDescription("Aggregate value of BloomFilter processed in the current session time window.")//TODO
@@ -113,9 +114,9 @@ public class BloomFilterCalculator extends AbstractProcessor {
             })
             .required(false)
             .build();
-    static final PropertyDescriptor JSON_TOKENISER = new PropertyDescriptor.Builder()
-            .name("json-tokeniser")
-            .displayName("Use json tokeniser")
+    static final PropertyDescriptor JSON_TOKENIZER = new PropertyDescriptor.Builder()
+            .name("json-tokenizer")
+            .displayName("Use json tokenizer")
             .description("If set to 'true', json parsing used to get tokens")
             .required(true)
             .defaultValue("false")
@@ -135,7 +136,7 @@ public class BloomFilterCalculator extends AbstractProcessor {
     private String bloomFilename;
     private Long expectedNumTokens;
     private Double fpp;
-    private Boolean useJsonTokeniser;
+    private Boolean useJsonTokenizer;
 
 
     @OnScheduled
@@ -145,7 +146,7 @@ public class BloomFilterCalculator extends AbstractProcessor {
         this.bloomFilename = context.getProperty(BLOOM_FILE_NAME).getValue();
         this.expectedNumTokens = context.getProperty(EXPECTED_NUM_TOKENS).asLong();
         this.fpp = context.getProperty(FALSE_POSITIVE_PROBABILITY).asDouble();
-        this.useJsonTokeniser = context.getProperty(JSON_TOKENISER).asBoolean();
+        this.useJsonTokenizer = context.getProperty(JSON_TOKENIZER).asBoolean();
     }
 
     @OnStopped
@@ -276,7 +277,7 @@ public class BloomFilterCalculator extends AbstractProcessor {
 
     @Override
     protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
-        return ImmutableList.of(RECORD_READER, BUCKET_ID_VALUE, TIME_GAP, BLOOM_FILE_NAME, EXPECTED_NUM_TOKENS, FALSE_POSITIVE_PROBABILITY,JSON_TOKENISER);
+        return ImmutableList.of(RECORD_READER, BUCKET_ID_VALUE, TIME_GAP, BLOOM_FILE_NAME, EXPECTED_NUM_TOKENS, FALSE_POSITIVE_PROBABILITY,JSON_TOKENIZER);
     }
 
     @Override
@@ -363,7 +364,7 @@ public class BloomFilterCalculator extends AbstractProcessor {
             while ((record = reader.nextRecord()) != null) {
                 String curRaw = record.getAsString("_raw");
                 Set<String> tokens = StringSegmenter.parse(curRaw);
-                if(useJsonTokeniser)
+                if(useJsonTokenizer)
                     tokens.addAll(StringSegmenter.parseJson(curRaw));
                 tokens.stream().forEach(retVal::put);
             }

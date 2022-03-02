@@ -24,16 +24,42 @@ The processor logic allows the use of only one of the properties 'Field list' an
 
 Description: Aggregate value of BloomFilter processed in the current session time window.
 
+A Bloom filter is a space-efficient probabilistic data structure (bitmap), conceived by Burton Howard Bloom in 1970, that is used to test whether an element is a member of a set. False positive matches are possible, but false negatives are not – in other words, a query returns either "possibly in set" or "definitely not in set". Detailed description in <a href="https://en.wikipedia.org/wiki/Bloom_filter">this article</a>. 
+
+The Bloom filter can use any amount of memory predefined by the user, and the larger it is, the less likely it is to false positive. Size of bitmap with default propertiesis about 76kB. <a href="https://www.di-mgt.com.au/bloom-calculator.html">Online-calculator for Bloom filter</a>
+
+<p align="center"><a href="Bloom_algorithm.png"><img src="Bloom_algorithm.png" width="600" /></a></p>
+
+Algorithm: When the processor receives a Flow-file, it calculates a bitmap from it and waits specified time for more files with the same bucket (BucketID property). After the time gap has elapsed, the bitmap will be written to disk. The file is written to the bucket directory (BucketID used as path). 
+For all files in bucket processor creates one bloom filter file (bitmap file). It is possible because given the existence of two Bloom filters of the same size and with the same set of hash functions, their union and intersection can be implemented using the bitwise disjunction (OR) and conjunction(AND) operations. Therefore, when the processor receives a file from a previously encountered bucket, it merges the filter file with the filter file already written to disk for that bucket. 
+
+Tokens are obtained from the _raw fields of Flow-file data by parsing this field with regular expressions or using json parser.
+There are no significant differences between these methods. With parsing _raw with regular expressions you will get additional tokens 
+
+```
+metric_long
+long
+metric
+name
+```
+As you can see, the names of the metric_name and metric_long_name fields are split into separate words, which does not affect the quality of the search.
+
 Extends: AbstractProcessor
 
 Properties (default values are in parentheses):
 1. Record Reader
-2. BucketID
-3. Time gap
-4. Bloom file name (bloom)
-5. Expected number of tokens (100000)
-6. False positive probabilty (0.05)
-7. Use json tokeniser (false)
+2. BucketID (empty). Usually set as
+
+```
+/opt/otp/indexes/${index}/${bucket-${_time_range}
+```
+
+where index and _time_range are attributes of Flow-file.
+3. Time gap (10 sec).
+4. Bloom file name (bloom).
+5. Expected number of tokens (100000). Estimated number of distinct tokens in the data. The probability of a false positive is calculated based on the insertion of a given number of elements.
+6. False positive probabilty (0.05). The probability of a false positive after insertion N elements, where N is Expected number of tokens.
+7. Use json tokenizer (false)
 
 ### JSONParseRecord
 <p align="center"><a href="JSONParseRecord.png"><img src="JSONParseRecord.png" width="600" /></a></p>
