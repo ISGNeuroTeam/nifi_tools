@@ -3,7 +3,6 @@ com/isgneuro/etl/nifi/processors/JSONSParseRecord$1.class
 com/isgneuro/etl/nifi/processors/MergeRecordNoAvro.class
 com/isgneuro/etl/nifi/processors/BloomFilterCalculator$BloomWithStopWatch.class
 com/isgneuro/etl/nifi/processors/RecordEditSchema$1.class
-org.codehaus.plexus.compiler.javac.JavacCompiler6133511907189385801arguments
 com/isgneuro/etl/nifi/processors/StringSegmenter.class
 com/isgneuro/etl/nifi/processors/AbstractRecordProcessorWithSchemaUpdates.class
 com/isgneuro/etl/nifi/processors/PutParquetNoAvro.class
@@ -11,6 +10,7 @@ com/isgneuro/etl/nifi/processors/JSONParseRecord.class
 com/isgneuro/etl/nifi/processors/utils/ParquetConfig.class
 com/isgneuro/etl/nifi/processors/PutParquetNoAvro$1.class
 com/isgneuro/etl/nifi/processors/utils/ParquetUtils.class
+org.codehaus.plexus.compiler.javac.JavacCompiler5963662580716016787arguments
 com/isgneuro/etl/nifi/processors/BloomFilterCalculator$BloomFiltersInfo.class
 com/isgneuro/etl/nifi/processors/AbstractRecordProcessorWithSchemaUpdates$1.class
 com/isgneuro/etl/nifi/processors/ListenTCPRecordWithDump.class

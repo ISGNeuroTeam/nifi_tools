@@ -4,6 +4,8 @@ This page provides a detailed description of the processors package com.isgneuro
 
 Some processors are designed from the ground up, some extend the functionality of standard. If the processor does not extend the functionality of one of the standard processors (it extends only abstract processors), then all properties will be described in section Properties. Otherwise, only the added properties will be described.
 
+
+
 ### AddRaw
 <p align="center"><a href="AddRaw.png"><img src="AddRaw.png" width="600" /></a></p>
  
@@ -14,8 +16,8 @@ Extends: AbstractRecordProcessor
 Properties (default values are in parentheses):
 1. Record Reader
 2. Record Writer
-3. Field list (empty). This property contains comma separated list of fields that will be included in the _raw field. 
-4. Ignore List (empty). This property contains comma separated list of fields that will be excluded from the _raw field
+3. Field list (empty). Comma separated list of fields that will be included in the _raw field. 
+4. Ignore List (empty). Comma separated list of fields that will be excluded from the _raw field
 
 The processor logic allows the use of only one of the properties 'Field list' and 'Ignore list'
 
@@ -30,8 +32,11 @@ The Bloom filter can use any amount of memory predefined by the user, and the la
 
 <p align="center"><a href="Bloom_algorithm.png"><img src="Bloom_algorithm.png" width="600" /></a></p>
 
-Algorithm: When the processor receives a Flow-file, it calculates a bitmap from it and waits specified time for more files with the same bucket (BucketID property). After the time gap has elapsed, the bitmap will be written to disk. The file is written to the bucket directory (BucketID used as path). 
-For all files in bucket processor creates one bloom filter file (bitmap file). It is possible because given the existence of two Bloom filters of the same size and with the same set of hash functions, their union and intersection can be implemented using the bitwise disjunction (OR) and conjunction(AND) operations. Therefore, when the processor receives a file from a previously encountered bucket, it merges the filter file with the filter file already written to disk for that bucket. 
+Algorithm: The processor starts regardless of whether there is any data in the input queue. At first processor checks bloom filter list for elements with expired time gap. Each bloom filter with an expired time gap interval is written to disk (before writing to disk, the processor checks for the presence of a previously recorded bloom file with the same BucketID, if the bloom file exists, then the files are merged). The file is written to the bucket directory (BucketID used as path).
+
+Then the processor checks if the Flow-file is in the input queue. When the processor receives a Flow-file, it calculates a bloom filter (bitmap) from it, adds it to the bloom filter list and starts the time gap timer. The timer is needed in case there are more files with the same BucketID in the queue. If the processor receives another Flow-file with the same BucketID (while the time gap has not expired), then the filters are merged in memory. This allows you to reduce the number of disk input/output operations.
+
+For all files with same BucketID processor creates one bloom filter file (bitmap file). It is possible because given the existence of two Bloom filters of the same size and with the same set of hash functions, their union and intersection can be implemented using the bitwise disjunction (OR) and conjunction(AND) operations. Therefore, when the processor receives a file with a previously encountered BucketID, it merges the filter file with the filter file already calculated for that BucketID. 
 
 Tokens are obtained from the _raw fields of Flow-file data by parsing this field with regular expressions or using json parser.
 There are no significant differences between these methods. With parsing _raw with regular expressions you will get additional tokens 
@@ -42,7 +47,8 @@ long
 metric
 name
 ```
-As you can see, the names of the metric_name and metric_long_name fields are split into separate words, which does not affect the quality of the search.
+As you can see, the names of the metric_name and metric_long_name fields are split into separate words. Therefore, when working with unstructured data, it is better to use regular expressions (json tokenizer = false), and when working with key-value records, it is better to use the json parsing (json tokenizer = true)
+
 
 Extends: AbstractProcessor
 
@@ -59,7 +65,7 @@ where index and _time_range are attributes of Flow-file.
 4. Bloom file name (bloom).
 5. Expected number of tokens (100000). Estimated number of distinct tokens in the data. The probability of a false positive is calculated based on the insertion of a given number of elements.
 6. False positive probabilty (0.05). The probability of a false positive after insertion N elements, where N is Expected number of tokens.
-7. Use json tokenizer (false)
+7. Use json tokenizer (true)
 
 ### JSONParseRecord
 <p align="center"><a href="JSONParseRecord.png"><img src="JSONParseRecord.png" width="600" /></a></p>
@@ -130,6 +136,8 @@ Extends: AbstractProcessor. Judging by the source code, it was written based on 
 Description: None
 
 Extends: MergeRecord
+
+Properties: None. All properties are inherited from the MergeRecord processor.
 
 ### PutParquetNoAvro
 <p align="center"><a href="PutParquetNoAvro.png"><img src="PutParquetNoAvro.png" width="600" /></a></p>

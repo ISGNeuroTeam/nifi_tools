@@ -119,7 +119,7 @@ public class BloomFilterCalculator extends AbstractProcessor {
             .displayName("Use json tokenizer")
             .description("If set to 'true', json parsing used to get tokens")
             .required(true)
-            .defaultValue("false")
+            .defaultValue("true")
             .allowableValues(new String[]{"true","false"})
             .build();
 
@@ -163,34 +163,38 @@ public class BloomFilterCalculator extends AbstractProcessor {
 
     @Override
     public void onTrigger(ProcessContext context, ProcessSession session) throws ProcessException {
-        FlowFile flowFile = session.get();
-        if (flowFile == null) {
-            return;
-        }
-
-
-        try {
-            String id = context.getProperty(BUCKET_ID_VALUE).evaluateAttributeExpressions(flowFile).getValue();
-
-            BloomFilter bloomFilter = calcBloom(flowFile,context,session);
-            if(bloomFilters.hasElapsed()) {
+    	try {
+    		if(bloomFilters.hasElapsed()) {
                 makeWithElection(
                         () -> bloomFilters.getElapsed().entrySet().stream().forEach(rec -> {
                             try {
                                 writeBloom(rec.getKey(), rec.getValue());
                             } catch (Exception e) {
                                 getLogger().error(e.getMessage(), e);
-                                //session.transfer(flowFile, FAILURE);
                             }
                         }), context.getStateManager());
             }
-
+    	} catch (Exception e) {
+            getLogger().error(e.getMessage(), e);
+    	}
+    	
+    	
+    	FlowFile flowFile = session.get();
+        if (flowFile == null) {
+            return;
+        }
+        
+        try {
+            String id = context.getProperty(BUCKET_ID_VALUE).evaluateAttributeExpressions(flowFile).getValue();
+            BloomFilter bloomFilter = calcBloom(flowFile, context,session);
             updateBloom(id, bloomFilter);
             session.transfer(flowFile, SUCCESS);
         } catch (Exception e) {
             getLogger().error(e.getMessage(), e);
             session.transfer(flowFile, FAILURE);
-        }
+        }    	
+    	
+    	
     }
 
     private void makeWithElection(Runnable procedure, StateManager stateManager) throws IOException{
@@ -222,57 +226,60 @@ public class BloomFilterCalculator extends AbstractProcessor {
 
     private void updateBloom(String id, BloomFilter curBloom){
         BloomWithStopWatch bloomInfo = bloomFilters.get(id);
-        if(bloomInfo != null){
-            try {
-                bloomInfo.getBloomFilter().mergeInPlace(curBloom);
-            } catch (IncompatibleMergeException e) {
-                e.printStackTrace();
-            }
-            bloomInfo.getStopWatch().stop();
-        }else{
-            bloomInfo = new BloomWithStopWatch(curBloom, new StopWatch(false));
-        }
+		if (bloomInfo != null) {
+			try {
+				bloomInfo.getBloomFilter().mergeInPlace(curBloom);
+			} catch (IncompatibleMergeException e) {
+				e.printStackTrace();
+			}
+			bloomInfo.getStopWatch().stop();
+		} else {
+			bloomInfo = new BloomWithStopWatch(curBloom, new StopWatch(false));
+		}
         bloomInfo.getStopWatch().start();
         bloomFilters.put(id, bloomInfo);
     }
 
-    private void writeBloom(String pathToDir, BloomFilter bloomFilter) throws Exception{
-        if(Files.isDirectory(Paths.get(pathToDir))) {
-            // Files.createDirectories(Paths.get(pathToDir));
-            if (Files.isRegularFile(Paths.get(pathToDir, bloomFilename))) {
-                try (FileInputStream fis = new FileInputStream(new File(pathToDir, bloomFilename))) {
-                    bloomFilter.mergeInPlace(BloomFilter.readFrom(fis));
-                }catch(EOFException e){
-                    if(! Files.isDirectory(Paths.get(pathToDir))) return;
-                    //TODO check if merging is failed
-                }
-            }
+	private void writeBloom(String pathToDir, BloomFilter bloomFilter) throws Exception {
+		if (Files.isDirectory(Paths.get(pathToDir))) {
+			if (Files.isRegularFile(Paths.get(pathToDir, bloomFilename))) {
+				try (FileInputStream fis = new FileInputStream(new File(pathToDir, bloomFilename))) {
+					bloomFilter.mergeInPlace(BloomFilter.readFrom(fis));
+				} catch (EOFException e) {
+					getLogger().error("Error while merging bloom filter: {}", new Object[] { e.getMessage()});
+				}
+			}
 
-            try (OutputStream os = new FileOutputStream(new File(pathToDir, bloomFilename))) {
-                int numTries = 0;
-                while (numTries < 3) {
-                    try {
-                        bloomFilter.writeTo(os);
-                        break;
-                    } catch (Exception e) {
-                        if(! Files.isDirectory(Paths.get(pathToDir))) return;
-                        numTries++;
-                        if (numTries == 3) {
-                            getLogger().error("Error when writing bloom to disk: {}. Try one more time...",
-                                    new Object[]{e.getMessage()});
-                            Thread.sleep(1000);
-                        } else {
-                            getLogger().error("Error when writing bloom to disk: {}. Bloom data will be erased for bucket {}",
-                                    new Object[]{e.getMessage(), pathToDir});
-                            throw e;
-                        }
-                    }
-                }
-            }catch (Exception e){
-                //TODO
-            }
-        }
-    }
+			try (OutputStream os = new FileOutputStream(new File(pathToDir, bloomFilename))) {
+				int numTries = 0;
+				while (numTries < 3) {
+					try {
+						bloomFilter.writeTo(os);
+						break;
+					} catch (Exception e) {
+						if (!Files.isDirectory(Paths.get(pathToDir)))
+							return;
+						numTries++;
+						if (numTries == 3) {
+							getLogger().error("Error when writing bloom to disk: {}. Try one more time...",
+									new Object[] { e.getMessage() });
+							Thread.sleep(1000);
+						} else {
+							getLogger().error(
+									"Error when writing bloom to disk: {}. Bloom data will be erased for bucket {}",
+									new Object[] { e.getMessage(), pathToDir });
+							throw e;
+						}
+					}
+				}
+			} catch (Exception e) {
+				getLogger().error("Error when writing bloom to disk: {}. Try one more time...",
+						new Object[] { e.getMessage() });
+			}
+		} else {
+			getLogger().error("Invalid bucket_id. Path {} is not directory", pathToDir);
+		}
+	}
 
 
     @Override
