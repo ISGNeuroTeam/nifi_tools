@@ -20,9 +20,9 @@ Contains processors:
 9. RecordEditSchema
 
 
-### Prerequisites
+## Prerequisites
 
-* Java JRE 1.8
+* Java SE 8 JDK
 * Maven (https://maven.apache.org/) - Dependency Management
 * Maven catalog with Apache Ni-Fi archetype (https://repo.maven.apache.org/maven2/archetype-catalog.xml)
 * Apache Ni-Fi 1.15.3
@@ -46,8 +46,26 @@ mvn archetype:generate
 	-DnifiVersion=<NiFi Version>
 
 
-### Deployment
+## Deployment
 
 1. Put .nar file from nifi-tools-nar/target/ to lib directory in NIFI_HOME
 2. Restart Ni-Fi
+
+
+## Contributing
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the tags on this repository. 
+
+## Authors
+
+Mikhail Rubashenkov (mikhail@isgneuro.com)   
+Dmitriy Gusarov (dgusarov@isgneuro.com)  
+Nizam Keramov (nkeramov@isgneuro.com, nkeramov@isgneuro.ru)  
+
+## License
+
+[OT.PLATFORM. License agreement.](LICENSE.md)
+
 

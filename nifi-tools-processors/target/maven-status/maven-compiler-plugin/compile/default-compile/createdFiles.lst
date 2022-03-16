@@ -9,8 +9,8 @@ com/isgneuro/etl/nifi/processors/PutParquetNoAvro.class
 com/isgneuro/etl/nifi/processors/JSONParseRecord.class
 com/isgneuro/etl/nifi/processors/utils/ParquetConfig.class
 com/isgneuro/etl/nifi/processors/PutParquetNoAvro$1.class
+org.codehaus.plexus.compiler.javac.JavacCompiler1831231371311263244arguments
 com/isgneuro/etl/nifi/processors/utils/ParquetUtils.class
-org.codehaus.plexus.compiler.javac.JavacCompiler5963662580716016787arguments
 com/isgneuro/etl/nifi/processors/BloomFilterCalculator$BloomFiltersInfo.class
 com/isgneuro/etl/nifi/processors/AbstractRecordProcessorWithSchemaUpdates$1.class
 com/isgneuro/etl/nifi/processors/ListenTCPRecordWithDump.class
