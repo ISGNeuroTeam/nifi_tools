@@ -23,36 +23,27 @@ Contains processors:
 ## Prerequisites
 
 * Java SE 8 JDK
-* Maven (https://maven.apache.org/) - Dependency Management
-* Maven catalog with Apache Ni-Fi archetype (https://repo.maven.apache.org/maven2/archetype-catalog.xml)
+* Maven 3.8
 * Apache Ni-Fi 1.15.3
 
-### Built With
-
-* Eclipse IDE with m2e plugin
-
 ## Building
+
+For build
 
 ```
 mvn clean install -X
 ```
 
-Create using
+For checking dependencies
 
-mvn archetype:generate
-	-DarchetypeGroupId=org.apache.nifi  
-	-DarchetypeArtifactId=nifi-processor-bundle-archetype  
-	-DarchetypeVersion=<NiFi Version>   
-	-DnifiVersion=<NiFi Version>
-
+```
+mvn dependency:tree
+```
 
 ## Deployment
 
 1. Put .nar file from nifi-tools-nar/target/ to lib directory in NIFI_HOME
 2. Restart Ni-Fi
-
-
-## Contributing
 
 ## Versioning
 
