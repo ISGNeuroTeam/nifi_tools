@@ -19,8 +19,8 @@ import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processors.hadoop.AbstractPutHDFSRecord;
 import org.apache.nifi.processors.hadoop.record.HDFSRecordWriter;
-//import org.apache.nifi.parquet.utils.ParquetUtils;
-//import org.apache.nifi.parquet.utils.ParquetConfig;
+import org.apache.nifi.parquet.utils.ParquetUtils;
+import org.apache.nifi.parquet.utils.ParquetConfig;
 import org.apache.nifi.serialization.record.RecordField;
 import org.apache.nifi.serialization.record.RecordSchema;
 import org.apache.nifi.util.Tuple;
@@ -36,11 +36,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.isgneuro.etl.nifi.processors.utils.ParquetConfig;
-import com.isgneuro.etl.nifi.processors.utils.ParquetUtils;
+//import com.isgneuro.etl.nifi.processors.utils.ParquetConfig;
+//import com.isgneuro.etl.nifi.processors.utils.ParquetUtils;
 
-import static com.isgneuro.etl.nifi.processors.utils.ParquetUtils.createParquetConfig;
-import static com.isgneuro.etl.nifi.processors.utils.ParquetUtils.applyCommonConfig;
+//import static com.isgneuro.etl.nifi.processors.utils.ParquetUtils.createParquetConfig;
+//import static com.isgneuro.etl.nifi.processors.utils.ParquetUtils.applyCommonConfig;
 import static org.apache.parquet.hadoop.metadata.CompressionCodecName.UNCOMPRESSED;
 import static org.apache.parquet.schema.OriginalType.TIMESTAMP_MILLIS;
 import static org.apache.parquet.schema.OriginalType.UTF8;
@@ -104,7 +104,7 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
             .defaultValue("{\" \": \"\"}")
             .build();
 
-
+/*
     public static final List<AllowableValue> COMPRESSION_TYPES;
     static {
         final List<AllowableValue> compressionTypes = new ArrayList<>();
@@ -114,15 +114,15 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
         }
         COMPRESSION_TYPES = Collections.unmodifiableList(compressionTypes);
     }
-
+*/
     @Override
     public List<AllowableValue> getCompressionTypes(final ProcessorInitializationContext context) {
-        return COMPRESSION_TYPES;
+    	return ParquetUtils.COMPRESSION_TYPES;
     }
 
     @Override
     public String getDefaultCompressionType(final ProcessorInitializationContext context) {
-        return UNCOMPRESSED.name();
+    	return CompressionCodecName.UNCOMPRESSED.name();
     }
 
     @Override
@@ -171,10 +171,10 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
         } else {
             builder = ExampleParquetWriter.builder(path).withType(parquetSchema);
         }
-        final ParquetConfig parquetConfig = createParquetConfig(context, flowFile.getAttributes());
+        final ParquetConfig parquetConfig = ParquetUtils.createParquetConfig(context, flowFile.getAttributes());
         //ParquetUtils.applyCommonConfig(builder, context, flowFile, conf, this);
         //ParquetUtils.applyCommonConfig(builder, conf, this);
-        applyCommonConfig(builder, conf, parquetConfig);
+        ParquetUtils.applyCommonConfig(builder, conf, parquetConfig);
         final ParquetWriter<Group> writer = builder.build();
         return new ParquetHDFSRecordWriter(writer, parquetSchema, replaces);
     }

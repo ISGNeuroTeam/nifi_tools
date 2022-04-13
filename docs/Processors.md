@@ -19,7 +19,7 @@ Properties (default values are in parentheses):
 3. Field list (empty). Comma separated list of fields that will be included in the _raw field. 
 4. Ignore List (empty). Comma separated list of fields that will be excluded from the _raw field
 
-The processor logic allows the use of only one of the properties 'Field list' and 'Ignore list'
+The processor logic allows the use of only one of the properties 'Field list' and 'Ignore list'. if both 'Field list' and 'Ignore list' are empty then all record fields will be added to _raw field.
 
 ### BloomFilterCalculator
 <p align="center"><a href="BloomFilterCalculator.png"><img src="images/BloomFilterCalculator.png" width="600" /></a></p>

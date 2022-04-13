@@ -17,7 +17,7 @@
 	<parent>
 		<groupId>com.isgneuro.etl</groupId>
     	<artifactId>nifi_tools</artifactId>
-		<version>1.0.1</version>
+		<version>1.1.14</version>
 	</parent>
 
 	<artifactId>nifi-tools-processors</artifactId>
@@ -27,7 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <nifi.version>1.15.3</nifi.version>
         <slf4j.version>1.7.36</slf4j.version>
-		<hadoop.version>3.3.1</hadoop.version>
+		<hadoop.version>2.9.2</hadoop.version>
     </properties> 
 
 	<dependencies>
@@ -46,6 +46,26 @@
 			<version>${nifi.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+		    <groupId>commons-io</groupId>
+		    <artifactId>commons-io</artifactId>
+		    <version>2.11.0</version>
+		</dependency>
+		<dependency>
+            <groupId>org.apache.nifi</groupId>
+            <artifactId>nifi-parquet-processors</artifactId>
+            <version>${nifi.version}</version>
+        </dependency>
+		
+		<!-- 
+		<dependency>
+		    <groupId>org.xerial.snappy</groupId>
+		    <artifactId>snappy-java</artifactId>
+		    <version>1.1.8.4</version>
+		</dependency>
+			 -->	
+		
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>log4j-over-slf4j</artifactId>
@@ -58,7 +78,8 @@
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
 			<version>${hadoop.version}</version>
-			<scope>provided</scope>
+			<!--  <scope>provided</scope>  -->
+			
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -68,6 +89,7 @@
 					<groupId>log4j</groupId>
 					<artifactId>log4j</artifactId>
 				</exclusion>
+				 
 				<exclusion>
 					<groupId>com.fasterxml.jackson.core</groupId>
 					<artifactId>jackson-databind</artifactId>
@@ -75,13 +97,17 @@
 				<exclusion>
 					<groupId>commons-logging</groupId>
 					<artifactId>commons-logging</artifactId>
-				</exclusion>
+				</exclusion> 
+				
 			</exclusions>
+			
 		</dependency>
 		<dependency>
+		
 		    <groupId>org.apache.hadoop</groupId>
 		    <artifactId>hadoop-mapreduce-client-core</artifactId>
 		    <version>${hadoop.version}</version>
+			
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -90,7 +116,8 @@
 				<exclusion>
 					<groupId>log4j</groupId>
 					<artifactId>log4j</artifactId>
-				</exclusion>
+				</exclusion> 
+			
 				<exclusion>
 					<groupId>com.fasterxml.jackson.core</groupId>
 					<artifactId>jackson-databind</artifactId>
@@ -98,23 +125,30 @@
 				<exclusion>
 					<groupId>commons-logging</groupId>
 					<artifactId>commons-logging</artifactId>
-				</exclusion>
+				</exclusion> 
+				
 			</exclusions>
+			
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
 			<version>${hadoop.version}</version>
+			
 			<exclusions>
+	        	 
 	        	<exclusion>
           		    <groupId>commons-logging</groupId>
 				    <artifactId>commons-logging</artifactId>
 	        	</exclusion>
+	        	
 	        	<exclusion>
 	          		<groupId>log4j</groupId>
 				    <artifactId>log4j</artifactId>
 	        	</exclusion>
+	        	
         	</exclusions>
+        	
 		</dependency>	
 		<!--  
 			NOTE: parquet-avro 1.12.0 brings in snappy-java 1.1.8, but hadoop-libraries depends on 
@@ -124,12 +158,14 @@
 			<groupId>org.apache.parquet</groupId>
 			<artifactId>parquet-avro</artifactId>
 			<version>1.12.2</version>
+			
 			<exclusions>
 				<exclusion>
 					<groupId>org.xerial.snappy</groupId>
 					<artifactId>snappy-java</artifactId>
 				</exclusion>
 			</exclusions>
+			
 		</dependency>
 		<dependency>
 			<groupId>org.apache.nifi</groupId>

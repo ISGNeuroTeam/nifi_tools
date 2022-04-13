@@ -25,12 +25,14 @@ public class ParquetHDFSRecordWriter implements HDFSRecordWriter {
         this.replaces = replaces;
         groupFactory = new SimpleGroupFactory(parquetSchema);
     }
-
+    
+    @Override
     public void write(Record record) throws IOException {
         Group g = createGroup(record);
         this.parquetWriter.write(g);
     }
-
+    
+    @Override
     public void close() throws IOException {
         this.parquetWriter.close();
     }
