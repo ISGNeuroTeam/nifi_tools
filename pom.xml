@@ -28,7 +28,7 @@
     <packaging>pom</packaging>
     
     <modules>
-        <module>nifi-tools-processors</module>
-        <module>nifi-tools-nar</module>
+        <module>nifi_tools-processors</module>
+        <module>nifi_tools-nar</module>
     </modules>
 </project>
