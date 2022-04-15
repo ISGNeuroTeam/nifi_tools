@@ -17,7 +17,7 @@
 	<parent>
 		<groupId>com.isgneuro.etl</groupId>
     	<artifactId>nifi_tools</artifactId>
-		<version>1.1.14</version>
+		<version>1.0.1</version>
 	</parent>
 
 	<artifactId>nifi_tools-processors</artifactId>
