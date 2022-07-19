@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -101,13 +101,13 @@ public class ListenTCPRecordWithDump extends AbstractProcessor {
 
 	static final PropertyDescriptor RECORD_READER = new PropertyDescriptor.Builder().name("record-reader")
 			.displayName("Record Reader").description("The Record Reader to use for incoming FlowFiles")
-			.identifiesControllerService(RecordReaderFactory.class).expressionLanguageSupported(false).required(true)
+			.identifiesControllerService(RecordReaderFactory.class).required(true)
 			.build();
 
 	static final PropertyDescriptor RECORD_WRITER = new PropertyDescriptor.Builder().name("record-writer")
 			.displayName("Record Writer")
 			.description("The Record Writer to use in order to serialize the data before writing to a FlowFile")
-			.identifiesControllerService(RecordSetWriterFactory.class).expressionLanguageSupported(false).required(true)
+			.identifiesControllerService(RecordSetWriterFactory.class).required(true)
 			.build();
 	static final PropertyDescriptor WRITE_DUMP = new PropertyDescriptor.Builder().name("write-dump")
 			.displayName("Write dump")
@@ -141,7 +141,7 @@ public class ListenTCPRecordWithDump extends AbstractProcessor {
 	static final PropertyDescriptor RECORD_BATCH_SIZE = new PropertyDescriptor.Builder().name("record-batch-size")
 			.displayName("Record Batch Size")
 			.description("The maximum number of records to write to a single FlowFile.")
-			.addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR).expressionLanguageSupported(false)
+			.addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
 			.defaultValue("1000").required(true).build();
 	static final PropertyDescriptor TIME_WINDOW = new PropertyDescriptor.Builder().displayName("Time window")
 			.name("Time window").description("The maximum time period to write to a single FlowFile.")

@@ -1,8 +1,7 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 import org.apache.nifi.annotation.behavior.EventDriven;
 import org.apache.nifi.annotation.behavior.InputRequirement;
-import org.apache.nifi.annotation.behavior.InputRequirement.Requirement;
 import org.apache.nifi.annotation.behavior.SideEffectFree;
 import org.apache.nifi.annotation.behavior.SupportsBatching;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
@@ -26,12 +25,11 @@ import java.util.regex.Pattern;
 @EventDriven
 @SideEffectFree
 @SupportsBatching
-@InputRequirement(Requirement.INPUT_REQUIRED)
-@Tags({"update", "record", "generic", "schema", "json", "text"})
+@InputRequirement(InputRequirement.Requirement.INPUT_REQUIRED)
+@Tags({"update", "record", "generic", "schema", "json", "text", "raw"})
 @CapabilityDescription("Adds _raw field")
-
 public class AddRaw extends AbstractRecordProcessor {
-    private Pattern LISTSEP = Pattern.compile("\\s*,\\s*");
+    private final Pattern LISTSEP = Pattern.compile("\\s*,\\s*");
 
     public static final PropertyDescriptor FIELD_LIST = new PropertyDescriptor.Builder()
             .name("Field List")
@@ -61,12 +59,12 @@ public class AddRaw extends AbstractRecordProcessor {
         HashSet<String> field_list = new HashSet<>();
         final String rawfields = context.getProperty(FIELD_LIST).evaluateAttributeExpressions(flowFile).getValue();
         if(rawfields != null)
-        	field_list = new HashSet<String>(Arrays.asList(LISTSEP.split(rawfields)));
+        	field_list = new HashSet<>(Arrays.asList(LISTSEP.split(rawfields)));
         
         HashSet<String> ignore_list = new HashSet<>();
         final String ignorefields = context.getProperty(IGNORE_LIST).evaluateAttributeExpressions(flowFile).getValue();
         if(ignorefields != null)
-        	ignore_list = new HashSet<String>(Arrays.asList(LISTSEP.split(ignorefields)));
+        	ignore_list = new HashSet<>(Arrays.asList(LISTSEP.split(ignorefields)));
         
         String _raw = "";
         ObjectMapper objectMapper = new ObjectMapper();
@@ -75,7 +73,7 @@ public class AddRaw extends AbstractRecordProcessor {
                 final Map<String, Object> raw_content = new HashMap<>();
                 for (Map.Entry<String, Object> f : record.toMap().entrySet()){
                     if (field_list.contains(f.getKey())){
-                    	raw_content.put(f.getKey(),f.getValue());
+                    	raw_content.put(f.getKey(), f.getValue());
                     }
                 }
                 _raw = objectMapper.writeValueAsString(raw_content);

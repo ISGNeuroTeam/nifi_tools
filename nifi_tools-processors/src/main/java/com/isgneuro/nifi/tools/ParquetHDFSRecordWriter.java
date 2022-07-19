@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 import org.apache.nifi.processors.hadoop.record.HDFSRecordWriter;
 import org.apache.nifi.serialization.record.Record;
@@ -44,9 +44,9 @@ public class ParquetHDFSRecordWriter implements HDFSRecordWriter {
 
             String newName = replaces.getOrDefault(e.getKey(), e.getKey());
             PrimitiveTypeName type = parquetSchema.getType(newName).asPrimitiveType().getPrimitiveTypeName();
-            if (type.equals(BINARY)) {
+            if (type.equals(BINARY))
                 g.append(newName, String.valueOf(e.getValue()));
-            } else if (type.equals(INT64))
+            else if (type.equals(INT64))
                 g.append(newName, (Long) e.getValue());
             else if (type.equals(INT32))
                 g.append(newName, (Integer) e.getValue());
@@ -56,7 +56,6 @@ public class ParquetHDFSRecordWriter implements HDFSRecordWriter {
                 g.append(newName, (Float) e.getValue());
             else if (type.equals(DOUBLE))
                 g.append(newName, (Double) e.getValue());
-            else if(type.equals(BINARY)) g.append(newName, String.valueOf(e.getValue()));
             else throw new IOException("Field name '" + newName +"' doesn't consistent with schema: " + parquetSchema);
         }
         return g;

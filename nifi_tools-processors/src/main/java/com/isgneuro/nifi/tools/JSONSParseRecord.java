@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 //import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.nifi.annotation.behavior.EventDriven;
@@ -46,9 +46,7 @@ import javax.json.stream.JsonParser;
     + "the Record. Whether the Property value is determined to be a RecordPath or a literal value depends on the configuration of the <Replacement Value Strategy> Property.")
 //@SeeAlso({ConvertRecord.class})
 public class JSONSParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
-	private static final String FIELD_NAME = "field.name";
-	private static final String FIELD_VALUE = "field.value";
-	private static final String FIELD_TYPE = "field.type";
+
 
 	private final Pattern kvpat = Pattern.compile("(?ms)^[^\\{\\[]*(?<json>[\\{\\[].+)$");
 	private Pattern mjson_pat = null;
@@ -518,7 +516,7 @@ public class JSONSParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
          */
 
 //        final RecordField keyf = new RecordField(ot_constants.FieldPrefix + key, RecordFieldType.STRING.getDataType(), true);
-        final RecordField keyf = new RecordField(key.insert(0,ot_constants.FieldPrefix).toString(), RecordFieldType.STRING.getDataType(), true);
+        final RecordField keyf = new RecordField(key.insert(0, Utils.FIELD_PREFIX).toString(), RecordFieldType.STRING.getDataType(), true);
         record.setValue(keyf, value);
         newfields.add(keyf);
 

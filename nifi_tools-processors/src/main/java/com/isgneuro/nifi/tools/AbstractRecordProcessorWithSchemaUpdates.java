@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.expression.ExpressionLanguageScope;

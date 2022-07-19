@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 import org.apache.nifi.annotation.behavior.EventDriven;
 import org.apache.nifi.annotation.behavior.InputRequirement;
@@ -145,7 +145,7 @@ public class RecordEditSchema extends AbstractProcessor {
             }
         }
 		this.Fields = recordPaths;
-		getLogger().debug("Pathes: {}", new Object[] { recordPaths });
+		getLogger().debug("Pathes: {}", recordPaths);
     }
 
     @Override
@@ -207,7 +207,7 @@ public class RecordEditSchema extends AbstractProcessor {
 				}
             });
         } catch (final Exception e) {
-            getLogger().error("Failed to process {}; will route to failure", new Object[] {flowFile, e});
+            getLogger().error("Failed to process {}; will route to failure", flowFile, e);
             session.transfer(flowFile, REL_FAILURE);
             return;
         }
@@ -221,24 +221,24 @@ public class RecordEditSchema extends AbstractProcessor {
 
         final int count = recordCount.get();
         session.adjustCounter("Records Processed", count, false);
-        getLogger().info("Successfully converted {} records for {}", new Object[] {count, flowFile});
+        getLogger().info("Successfully converted {} records for {}", count, flowFile);
     }
 
     public RecordSchema processSchema(RecordSchema inschema){
 		final List<RecordField> outfields = new ArrayList<>();
 		Map<String, DataType> runfields = new HashMap<>(Fields);
 
-		getLogger().debug("Fields: {}", new Object[] { Fields });
+		getLogger().debug("Fields: {}", Fields);
 		for (RecordField inf : inschema.getFields()) {
 			String fn = inf.getFieldName();
-			getLogger().debug("Field: {}", new Object[] { fn });
+			getLogger().debug("Field: {}", fn);
 
 			if (runfields.containsKey(fn)) {
 				DataType ft = runfields.get(fn);
 				runfields.remove(fn);
 				if (ft == null)
 					continue;
-				getLogger().debug("Add field:{}={}", new Object[] { fn, ft });
+				getLogger().debug("Add field:{}={}", fn, ft);
 				outfields.add(new RecordField(fn, ft, true));
 			} else {
 				outfields.add(inf);
@@ -247,13 +247,13 @@ public class RecordEditSchema extends AbstractProcessor {
 
 		for (Map.Entry<String, DataType> f : runfields.entrySet()) {
 			if (f != null) {
-				getLogger().debug("Add field:{}", new Object[] { f });
+				getLogger().debug("Add field:{}", f);
 				outfields.add(new RecordField(f.getKey(), f.getValue(), true));
 			}
 		}
 
 		RecordSchema resschema = new SimpleRecordSchema(outfields);
-		getLogger().debug("Old Schema:{}\nNew Schema:{}", new Object[] { inschema, resschema });
+		getLogger().debug("Old Schema:{}\nNew Schema:{}", inschema, resschema);
 
 		return resschema;
     }

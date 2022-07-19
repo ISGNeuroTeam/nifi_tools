@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.processor.ProcessContext;
@@ -13,10 +13,8 @@ public class MergeRecordNoAvro extends MergeRecord {
         if (MERGE_STRATEGY_DEFRAGMENT.getValue().equals(mergeStrategy)) {
             return flowFile.getAttribute(FRAGMENT_ID_ATTRIBUTE);
         }
-
         final String schemaText = schema.toString();
-        this.getLogger().debug("Schema:{}",new Object[]{schemaText});
-
+        this.getLogger().debug("Schema:{}", schemaText);
         final String groupId;
         final String correlationshipAttributeName = context.getProperty(CORRELATION_ATTRIBUTE_NAME).getValue();
         if (correlationshipAttributeName != null) {

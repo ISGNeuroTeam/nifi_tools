@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 import org.apache.nifi.annotation.behavior.EventDriven;
 import org.apache.nifi.annotation.behavior.InputRequirement;
@@ -46,9 +46,7 @@ import java.util.stream.Collectors;
     + "the Record. Whether the Property value is determined to be a RecordPath or a literal value depends on the configuration of the <Replacement Value Strategy> Property.")
 
 public class KVParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
-	private static final String FIELD_NAME = "field.name";
-	private static final String FIELD_VALUE = "field.value";
-	private static final String FIELD_TYPE = "field.type";
+
 
 	private Pattern Pair_pat = null;
 	private Pattern KV_pat = null;
@@ -258,7 +256,7 @@ public class KVParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
                         //final String value = kvmat.group("value") != null ? kvmat.group("value") : kvmat.group("value1");
                         //this.getLogger().info("Key:{} Value:{} Key1:{} Value1:{}", new Object[]{kvmat.group("key"), kvmat.group("value"), kvmat.group("key1"), kvmat.group("value1")});
 
-                        final RecordField keyf = new RecordField(ot_constants.FieldPrefix + key, RecordFieldType.STRING.getDataType(), true);
+                        final RecordField keyf = new RecordField(Utils.FIELD_PREFIX + key, RecordFieldType.STRING.getDataType(), true);
                         record.setValue(keyf, value);
                         newfields.add(keyf);
                     }

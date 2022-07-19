@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 import com.github.wnameless.json.flattener.JsonFlattener;
 
@@ -49,9 +49,6 @@ import java.util.stream.Collectors;
     + "the Record. Whether the Property value is determined to be a RecordPath or a literal value depends on the configuration of the <Replacement Value Strategy> Property.")
 //@SeeAlso({ConvertRecord.class})
 public class JSONParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
-    private static final String FIELD_NAME = "field.name";
-    private static final String FIELD_VALUE = "field.value";
-    private static final String FIELD_TYPE = "field.type";
 
 	private final Pattern kvpat = Pattern.compile("(?ms)^[^\\{]*(?<json>\\{.+\\})[^\\}]*$");
 	private Pattern mjson_pat = null;
@@ -250,7 +247,7 @@ public class JSONParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
                 final int isq=srcval.indexOf('[');
                 int istart=-1;
                 if(icurv != -1 && isq != -1){
-                    istart=icurv < isq ? icurv : isq;
+                    istart = Math.min(icurv, isq);
                 }
                 else if (icurv!=-1) istart=icurv;
                 else if (isq!=-1) istart=isq;
@@ -347,9 +344,9 @@ public class JSONParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
                                 if (do_encode_keys)
                                     key = DatatypeConverter.printHexBinary((field_prefix + key).getBytes());
                                 final String value = jf.getValue() == null ? null : jf.getValue().toString();
-                                this.getLogger().debug("Key:{}; Value:{}", new Object[]{key, value});
+                                this.getLogger().debug("Key:{}; Value:{}", key, value);
                                 //if (reccnt<10000) {
-                                    final RecordField keyf = new RecordField(ot_constants.FieldPrefix + key, RecordFieldType.STRING.getDataType(), true);
+                                    final RecordField keyf = new RecordField(Utils.FIELD_PREFIX + key, RecordFieldType.STRING.getDataType(), true);
                                     record.setValue(keyf, value);
                                     newfields.add(keyf);
                                 //}
@@ -370,12 +367,12 @@ public class JSONParseRecord extends AbstractRecordProcessorWithSchemaUpdates {
                             newfields.add(keyf);
                             if (fpos>=(json.length() - 1)){
                                 this.getLogger().debug("Object:"+json);
-                                this.getLogger().info("Error at:{}", new Object[]{fstr});
+                                this.getLogger().info("Error at:{}", fstr);
                                 this.getLogger().error("Parsing error:",e);
                             }
                             else {
                                 this.getLogger().debug("Object:"+json);
-                                this.getLogger().error("Error at:{} Parsing error:", new Object[]{fstr}, e);
+                                this.getLogger().error("Error at:{} Parsing error:", fstr, e);
                             }
                         }
                     /*catch (java.io.UnsupportedEncodingException e){

@@ -1,4 +1,4 @@
-package com.isgneuro.etl.nifi.processors;
+package com.isgneuro.nifi.tools;
 
 
 import org.apache.hadoop.conf.Configuration;
@@ -13,14 +13,13 @@ import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.components.RequiredPermission;
 import org.apache.nifi.components.ValidationResult;
 import org.apache.nifi.flowfile.FlowFile;
-
+import org.apache.nifi.parquet.utils.ParquetConfig;
+import org.apache.nifi.parquet.utils.ParquetUtils;
 import org.apache.nifi.processor.ProcessContext;
 import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processors.hadoop.AbstractPutHDFSRecord;
 import org.apache.nifi.processors.hadoop.record.HDFSRecordWriter;
-import org.apache.nifi.parquet.utils.ParquetUtils;
-import org.apache.nifi.parquet.utils.ParquetConfig;
 import org.apache.nifi.serialization.record.RecordField;
 import org.apache.nifi.serialization.record.RecordSchema;
 import org.apache.nifi.util.Tuple;
@@ -28,22 +27,15 @@ import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.example.ExampleParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.MessageType;
-import org.apache.parquet.schema.OriginalType;
 import org.apache.parquet.schema.Types;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-//import com.isgneuro.etl.nifi.processors.utils.ParquetConfig;
-//import com.isgneuro.etl.nifi.processors.utils.ParquetUtils;
 
-//import static com.isgneuro.etl.nifi.processors.utils.ParquetUtils.createParquetConfig;
-//import static com.isgneuro.etl.nifi.processors.utils.ParquetUtils.applyCommonConfig;
-import static org.apache.parquet.hadoop.metadata.CompressionCodecName.UNCOMPRESSED;
-import static org.apache.parquet.schema.OriginalType.TIMESTAMP_MILLIS;
-import static org.apache.parquet.schema.OriginalType.UTF8;
 import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.*;
 
 @InputRequirement(InputRequirement.Requirement.INPUT_REQUIRED)
@@ -67,7 +59,6 @@ import static org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName.*;
                 explanation = "Provides operator the ability to write any file that NiFi has access to in HDFS or the local filesystem.")
 })
 public class PutParquetNoAvro extends AbstractPutHDFSRecord {
-    private volatile Map<Long, String> ddlSchemas = new HashMap<>();
 
     public static final PropertyDescriptor REMOVE_CRC_FILES = new PropertyDescriptor.Builder()
             .name("remove-crc-files")
@@ -99,30 +90,21 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
             .description("Specifies symbols and sequences to be replaced")
             .addValidator((subject, value, context) ->
                     (new ValidationResult.Builder()).subject(subject).input(value).explanation("Invalid format." +
-                            " Format shoud be {\"symbol1\": \"replace1\", \"symbol2\": \"replace2\"}")
+                                    " Format shoud be {\"symbol1\": \"replace1\", \"symbol2\": \"replace2\"}")
                             .valid(value.startsWith("{\"") && value.endsWith("\"}")).build())
             .defaultValue("{\" \": \"\"}")
             .build();
 
-/*
-    public static final List<AllowableValue> COMPRESSION_TYPES;
-    static {
-        final List<AllowableValue> compressionTypes = new ArrayList<>();
-        for (CompressionCodecName compressionCodecName : CompressionCodecName.values()) {
-            final String name = compressionCodecName.name();
-            compressionTypes.add(new AllowableValue(name, name));
-        }
-        COMPRESSION_TYPES = Collections.unmodifiableList(compressionTypes);
-    }
-*/
+
+
     @Override
     public List<AllowableValue> getCompressionTypes(final ProcessorInitializationContext context) {
-    	return ParquetUtils.COMPRESSION_TYPES;
+        return ParquetUtils.COMPRESSION_TYPES;
     }
 
     @Override
     public String getDefaultCompressionType(final ProcessorInitializationContext context) {
-    	return CompressionCodecName.UNCOMPRESSED.name();
+        return CompressionCodecName.UNCOMPRESSED.name();
     }
 
     @Override
@@ -158,7 +140,7 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
                 outputStream.writeBytes(makeDDLSchema(parquetSchema));
                 outputStream.close();
             } catch (Exception e) {
-                this.getLogger().error("Unable to create temp schema file {} due to {}", new Object[]{"." + path.getName() + ".schema", e});
+                this.getLogger().error("Unable to create temp schema file {} due to {}", "." + path.getName() + ".schema", e);
             }
         }
         ParquetWriter.Builder builder;
@@ -172,8 +154,6 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
             builder = ExampleParquetWriter.builder(path).withType(parquetSchema);
         }
         final ParquetConfig parquetConfig = ParquetUtils.createParquetConfig(context, flowFile.getAttributes());
-        //ParquetUtils.applyCommonConfig(builder, context, flowFile, conf, this);
-        //ParquetUtils.applyCommonConfig(builder, conf, this);
         ParquetUtils.applyCommonConfig(builder, conf, parquetConfig);
         final ParquetWriter<Group> writer = builder.build();
         return new ParquetHDFSRecordWriter(writer, parquetSchema, replaces);
@@ -181,34 +161,34 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
 
     private String generateSparkMetadata(MessageType parquetSchema){
         return parquetSchema.getFields().stream().map(f -> {
-            String type;
-            OriginalType originalType = f.getOriginalType();
-            originalType = originalType == null ? OriginalType.ENUM : originalType; //Just to make OriginalType not UTF8 or TIMESTAMP_MILLIS if it is null
-            switch (originalType){
-                case UTF8: type="string";
-                    break;
-                case TIMESTAMP_MILLIS: type="timestamp";
-                    break;
-                default:
-                    switch(f.asPrimitiveType().getPrimitiveTypeName()){
-                        case INT32: type="integer";
+                    String type;
+                    LogicalTypeAnnotation logicalType = f.getLogicalTypeAnnotation();
+                    logicalType = logicalType == null ? LogicalTypeAnnotation.enumType() : logicalType; //Just to make OriginalType not UTF8 or TIMESTAMP_MILLIS if it is null
+                    switch (logicalType.toOriginalType()){
+                        case UTF8: type="string";
                             break;
-                        case INT64: type="long";
+                        case TIMESTAMP_MILLIS: type="timestamp";
                             break;
-                        case DOUBLE: type="double";
-                            break;
-                        case FLOAT: type="float";
-                            break;
-                        case BOOLEAN: type="boolean";
-                            break;
-                        default: type="string";
+                        default:
+                            switch(f.asPrimitiveType().getPrimitiveTypeName()){
+                                case INT32: type="integer";
+                                    break;
+                                case INT64: type="long";
+                                    break;
+                                case DOUBLE: type="double";
+                                    break;
+                                case FLOAT: type="float";
+                                    break;
+                                case BOOLEAN: type="boolean";
+                                    break;
+                                default: type="string";
+                            }
                     }
-            }
-            return "{\"name\":\"" + f.getName() + "\"," +
-                    "\"type\":\"" + type + "\"," +
-                    "\"nullable\":" +f.getRepetition().name().equals("OPTIONAL")+ "," +
-                    "\"metadata\":{}" +
-                    "}";})
+                    return "{\"name\":\"" + f.getName() + "\"," +
+                            "\"type\":\"" + type + "\"," +
+                            "\"nullable\":" +f.getRepetition().name().equals("OPTIONAL")+ "," +
+                            "\"metadata\":{}" +
+                            "}";})
                 .collect(Collectors.joining(",","{\"type\":\"struct\",\"fields\":[","]}"));
     }
 
@@ -224,7 +204,7 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
             try {
                 rename(getFileSystem(), schemaTmpFile, schemaFile);
             } catch (Exception e) {
-                this.getLogger().error("Unable to rename schema file {} due to {}", new Object[]{filename + ".schema", e});
+                this.getLogger().error("Unable to rename schema file {} due to {}", filename + ".schema", e);
             }
         }
 
@@ -243,32 +223,32 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
     }
     private String makeDDLSchema(MessageType parquetSchema) {
         return parquetSchema.getFields().stream().map(f -> {
-        String type;
-        OriginalType originalType = f.getOriginalType();
-        originalType = originalType == null ? OriginalType.ENUM : originalType; //Just to make OriginalType not UTF8 or TIMESTAMP_MILLIS if it is null
-        switch (originalType){
-            case UTF8: type="STRING";
-                break;
-            case TIMESTAMP_MILLIS: type="TIMESTAMP";
-                break;
-            default:
-                switch(f.asPrimitiveType().getPrimitiveTypeName()){
-                    case INT32: type="INTEGER";
-                        break;
-                    case INT64: type="BIGINT";
-                        break;
-                    case DOUBLE: type="DOUBLE";
-                        break;
-                    case FLOAT: type="FLOAT";
-                        break;
-                    case BOOLEAN: type="BIT";
-                        break;
-                    default: type="STRING";
-                }
-        }
-        return "`" + f.getName() + "` " + type;})
-            .collect(Collectors.joining("\n"));
-}
+                    String type;
+                    LogicalTypeAnnotation logicalType = LogicalTypeAnnotation.fromOriginalType(f.getOriginalType(), null);
+                    logicalType = logicalType == null ? LogicalTypeAnnotation.enumType() : logicalType; //Just to make OriginalType not UTF8 or TIMESTAMP_MILLIS if it is null
+                    switch (logicalType.toOriginalType()){
+                        case UTF8: type="STRING";
+                            break;
+                        case TIMESTAMP_MILLIS: type="TIMESTAMP";
+                            break;
+                        default:
+                            switch(f.asPrimitiveType().getPrimitiveTypeName()){
+                                case INT32: type="INTEGER";
+                                    break;
+                                case INT64: type="BIGINT";
+                                    break;
+                                case DOUBLE: type="DOUBLE";
+                                    break;
+                                case FLOAT: type="FLOAT";
+                                    break;
+                                case BOOLEAN: type="BIT";
+                                    break;
+                                default: type="STRING";
+                            }
+                    }
+                    return "`" + f.getName() + "` " + type;})
+                .collect(Collectors.joining("\n"));
+    }
 
 
     private MessageType makeParquetSchema(RecordSchema nifiSchema, Map<String,String> replaces){
@@ -278,18 +258,18 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
             switch (name.getDataType().getFieldType()) {
                 case LONG:
                     if(name.getFieldName().equals("_time")) {
-                        msgBuilder.required(INT64).as(TIMESTAMP_MILLIS).named(newName);
+                        msgBuilder.required(INT64).as(LogicalTypeAnnotation.timestampType(true, LogicalTypeAnnotation.TimeUnit.MILLIS)).named(newName);
                     }else{
                         msgBuilder.optional(INT64).named(newName);
                     }
                     break;
                 case STRING:
                     //Если данное имя гарантированно однажды попадет в схему, не следует добавлять его еще раз
-                    if(!replaces.values().contains(name.getFieldName())) {
+                    if(!replaces.containsValue(name.getFieldName())) {
                         if (name.getFieldName().equals("_raw")) {
-                            msgBuilder.required(BINARY).as(UTF8).named(newName);
+                            msgBuilder.required(BINARY).as(LogicalTypeAnnotation.stringType()).named(newName);
                         } else {
-                            msgBuilder.optional(BINARY).as(UTF8).named(newName);
+                            msgBuilder.optional(BINARY).as(LogicalTypeAnnotation.stringType()).named(newName);
                         }
                     }
                     break;
@@ -305,7 +285,7 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
                 case BOOLEAN:
                     msgBuilder.optional(BOOLEAN).named(newName);
                     break;
-                default: msgBuilder.optional(BINARY).as(UTF8).named(newName);
+                default: msgBuilder.optional(BINARY).as(LogicalTypeAnnotation.stringType()).named(newName);
             }
         }
         return msgBuilder.named("nifirecord");
@@ -313,8 +293,7 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
 
     Map<String, String> getReplacesMap(final ProcessContext context, final FlowFile flowFile, final RecordSchema schema){
         String replaces = context.getProperty(REPLACE_SPEC_SYMBOLS).evaluateAttributeExpressions(flowFile).getValue();
-        Map<String, String> replaceSymbols = Arrays.asList(replaces.substring(2, replaces.length()-2).split("\", \""))
-                .stream().map(e -> {
+        Map<String, String> replaceSymbols = Arrays.stream(replaces.substring(2, replaces.length()-2).split("\", \"")).map(e -> {
                     String[] pair = e.split("\": \"");
                     return new Tuple<>(pair[0], pair.length > 1 ? pair[1] : "");
                 })
@@ -332,4 +311,3 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
                 .collect(Collectors.toMap(Tuple::getKey,Tuple::getValue));
     }
 }
-

@@ -12,12 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-com.isgneuro.etl.nifi.processors.AddRaw
-com.isgneuro.etl.nifi.processors.BloomFilterCalculator
-com.isgneuro.etl.nifi.processors.JSONParseRecord
-com.isgneuro.etl.nifi.processors.JSONSParseRecord
-com.isgneuro.etl.nifi.processors.KVParseRecord
-com.isgneuro.etl.nifi.processors.ListenTCPRecordWithDump
-com.isgneuro.etl.nifi.processors.MergeRecordNoAvro
-com.isgneuro.etl.nifi.processors.PutParquetNoAvro
-com.isgneuro.etl.nifi.processors.RecordEditSchema
+com.isgneuro.nifi.tools.AddRaw
+com.isgneuro.nifi.tools.bloom.BloomFilterCalculator
+com.isgneuro.nifi.tools.JSONParseRecord
+com.isgneuro.nifi.tools.JSONSParseRecord
+com.isgneuro.nifi.tools.KVParseRecord
+com.isgneuro.nifi.tools.ListenTCPRecordWithDump
+com.isgneuro.nifi.tools.MergeRecordNoAvro
+com.isgneuro.nifi.tools.PutParquetNoAvro
+com.isgneuro.nifi.tools.RecordEditSchema
