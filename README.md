@@ -23,7 +23,7 @@ Contains processors:
 ## Prerequisites
 
 * Java SE 8 JDK
-* Maven 3.8
+* Maven 3.6
 * Apache Ni-Fi 1.15.3
 
 ## Building
@@ -31,14 +31,9 @@ Contains processors:
 For build
 
 ```
-mvn clean install -X
+make build
 ```
 
-For checking dependencies
-
-```
-mvn dependency:tree
-```
 
 ## Deployment
 

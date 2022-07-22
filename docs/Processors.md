@@ -7,7 +7,7 @@ Some processors are designed from the ground up, some extend the functionality o
 
 
 ### AddRaw
-<p align="center"><a href="AddRaw.png"><img src="images/AddRaw.png" width="600" /></a></p>
+<p align="center"><a href="images/AddRaw.png"><img src="images/AddRaw.png" width="600" /></a></p>
  
 Description: Adds _raw field. 
 
@@ -19,10 +19,10 @@ Properties (default values are in parentheses):
 3. Field list (empty). Comma separated list of fields that will be included in the _raw field. 
 4. Ignore List (empty). Comma separated list of fields that will be excluded from the _raw field
 
-The processor logic allows the use of only one of the properties 'Field list' and 'Ignore list'
+The processor logic allows the use of only one of the properties 'Field list' and 'Ignore list'. if both 'Field list' and 'Ignore list' are empty then all record fields will be added to _raw field.
 
 ### BloomFilterCalculator
-<p align="center"><a href="BloomFilterCalculator.png"><img src="images/BloomFilterCalculator.png" width="600" /></a></p>
+<p align="center"><a href="images/BloomFilterCalculator.png"><img src="images/BloomFilterCalculator.png" width="600" /></a></p>
 
 Description: Aggregate value of BloomFilter processed in the current session time window.
 
@@ -43,16 +43,7 @@ For all files with same BucketID processor creates one bloom filter file (bitmap
 !!! Filters contained in memory are not shared between processor instances (if you use greater than 1 concurrent tasks). Data exchange between processor instances is implemented through the state methods and only allows you to avoid simultaneous writing of files by several processors (it doesn’t matter whether the BucketID is the same or not, that is, the same directory or not).
 
 
-Tokens are obtained from the _raw fields of Flow-file data by parsing this field with regular expressions or using json parser.
-There are no significant differences between these methods. With parsing _raw with regular expressions you will get additional tokens 
-
-```
-metric_long
-long
-metric
-name
-```
-As you can see, the names of the metric_name and metric_long_name fields are split into separate words. Therefore, when working with unstructured data, it is better to use regular expressions (json tokenizer = false), and when working with key-value records, it is better to use the json parsing (json tokenizer = true)
+Tokens are obtained from the _raw field of Flow-file data records
 
 
 Extends: AbstractProcessor
@@ -66,14 +57,25 @@ Properties (default values are in parentheses):
 ```
 
 where index and _time_range are attributes of Flow-file.
-3. Time gap (10 sec).
-4. Bloom file name (bloom).
-5. Expected number of tokens (100000). Estimated number of distinct tokens in the data. The probability of a false positive is calculated based on the insertion of a given number of elements.
-6. False positive probabilty (0.05). The probability of a false positive after insertion N elements, where N is Expected number of tokens.
-7. Use json tokenizer (true)
+3. Expected number of tokens (100000). Estimated number of distinct tokens in the data. The probability of a false positive is calculated based on the insertion of a given number of elements.
+4. False positive probabilty (0.05). The probability of a false positive after insertion N elements, where N is Expected number of tokens.
+5. Time gap (10 sec). If records for bucketId doest arrive for this time, bloom is calculated.
+6. Bloom file name (bloom). This name must be set in dispatcher's config.
+7. Max write retries (3). Maximum number of bloom filter file write retries on error.
+8. Tokenizing string. The set of characters by which the string is split into tokens. Default value as
+
+```
+\r\n\t[]<>(){}\"«»'`.,;!?-+*/^&@$#%_:= 
+```
+
+Tokenizer splits the _raw field of record by each of the specified characters, additionally, through regular expressions, are extracted ip addresses, datetime values, emails.
+
+9. Filter numeric tokens (true). If set to 'true', bloom tokens that are numbers will be removed.
+10. Minimal token length (3). Shorter tokens will not be added to the bloom filter.
+11. Save tokens (true). If set to 'true', bloom tokens will be written to separate txt file in bucket directory (bloom file name with txt extension). Increases data processing time.
 
 ### JSONParseRecord
-<p align="center"><a href="JSONParseRecord.png"><img src="images/JSONParseRecord.png" width="600" /></a></p>
+<p align="center"><a href="images/JSONParseRecord.png"><img src="images/JSONParseRecord.png" width="600" /></a></p>
 
 Description: Updates the contents of a FlowFile that contains Record-oriented data (i.e., data that can be read via a RecordReader and written by a RecordWriter). This Processor requires that at least one user-defined Property be added. The name of the Property should indicate a RecordPath that determines the field that should be updated. The value of the Property is either a replacement value (optionally making use of the Expression Language) or is itself a RecordPath that extracts a value from the Record. Whether the Property value is determined to be a RecordPath or a literal value depends on the configuration of the <Replacement Value Strategy> Property.
 
@@ -91,7 +93,7 @@ Properties (default values are in parentheses):
 9. Illegal characters replace (true)
 
 ### JSONSParseRecord
-<p align="center"><a href="JSONSParseRecord.png"><img src="images/JSONSParseRecord.png" width="600" /></a></p>
+<p align="center"><a href="images/JSONSParseRecord.png"><img src="images/JSONSParseRecord.png" width="600" /></a></p>
 
 Description: Updates the contents of a FlowFile that contains Record-oriented data (i.e., data that can be read via a RecordReader and written by a RecordWriter). This Processor requires that at least one user-defined Property be added. The name of the Property should indicate a RecordPath that determines the field that should be updated. The value of the Property is either a replacement value (optionally making use of the Expression Language) or is itself a RecordPath that extracts a value from the Record. Whether the Property value is determined to be a RecordPath or a literal value depends on the configuration of the <Replacement Value Strategy> Property.
 
@@ -110,7 +112,7 @@ Properties (default values are in parentheses):
 10. Print overdepth fields as text (true)
 
 ### KVParseRecord
-<p align="center"><a href="KVParseRecord.png"><img src="images/KVParseRecord.png" width="600" /></a></p>
+<p align="center"><a href="images/KVParseRecord.png"><img src="images/KVParseRecord.png" width="600" /></a></p>
 
 Description: Updates the contents of a FlowFile that contains Record-oriented data (i.e., data that can be read via a RecordReader and written by a RecordWriter). This Processor requires that at least one user-defined Property be added. The name of the Property should indicate a RecordPath that determines the field that should be updated. The value of the Property is either a replacement value (optionally making use of the Expression Language) or is itself a RecordPath that extracts a value from the Record. Whether the Property value is determined to be a RecordPath or a literal value depends on the configuration of the <Replacement Value Strategy> Property.
 
@@ -128,7 +130,7 @@ Properties (default values are in parentheses):
 
 
 ### ListenTCPRecordWithDump
-<p align="center"><a href="ListenTCPRecordWithDump.png"><img src="images/ListenTCPRecordWithDump.png" width="600" /></a></p>
+<p align="center"><a href="images/ListenTCPRecordWithDump.png"><img src="images/ListenTCPRecordWithDump.png" width="600" /></a></p>
 
 Description: Listens for incoming TCP connections and reads data from each connection using a configured record reader, and writes the records to a flow file using a configured record writer. The type of record reader selected will determine how clients are expected to send data. For example, when using a Grok reader to read logs, a client can keep an open connection and continuously stream data, but when using an JSON reader, the client cannot send an array of JSON documents and then send another array on the same connection, as the reader would be in a bad state at that point. Records will be read from the connection in blocking mode, and will timeout according to the Read Timeout specified in the processor. If the read times out, or if any other error is encountered when reading, the connection will be closed, and any records read up to that point will be handled according to the configured Read Error Strategy (Discard or Transfer). In cases where clients are keeping a connection open, the concurrent tasks for the processor should be adjusted to match the Max Number of TCP Connections allowed, so that there is a task processing each connection.
 
@@ -136,7 +138,7 @@ Extends: AbstractProcessor. Judging by the source code, it was written based on 
 
 
 ### MergeRecordNoAvro
-<p align="center"><a href="MergeRecordNoAvro.png"><img src="images/MergeRecordNoAvro.png" width="600" /></a></p>
+<p align="center"><a href="images/MergeRecordNoAvro.png"><img src="images/MergeRecordNoAvro.png" width="600" /></a></p>
 
 Description: None
 
@@ -145,14 +147,14 @@ Extends: MergeRecord
 Properties: None. All properties are inherited from the MergeRecord processor.
 
 ### PutParquetNoAvro
-<p align="center"><a href="PutParquetNoAvro.png"><img src="images/PutParquetNoAvro.png" width="600" /></a></p>
+<p align="center"><a href="images/PutParquetNoAvro.png"><img src="images/PutParquetNoAvro.png" width="600" /></a></p>
 
 Description: Reads records from an incoming FlowFile using the provided Record Reader, and writes those records to a Parquet file. The schema for the Parquet file must be provided in the processor properties. This processor will first write a temporary dot file and upon successfully writing every record to the dot file, it will rename the dot file to it's final name. If the dot file cannot be renamed, the rename operation will be attempted up to 10 times, and if still not successful, the dot file will be deleted and the flow file will be routed to failure. If any error occurs while reading records from the input, or writing records to the output, the entire dot file will be removed and the flow file will be routed to failure or retry, depending on the error.
 
 Extends: AbstractPutHDFSRecord. Judging by the source code, it was written based on the source of the <a href="https://github.com/apache/nifi/blob/main/nifi-nar-bundles/nifi-parquet-bundle/nifi-parquet-processors/src/main/java/org/apache/nifi/processors/parquet/PutParquet.java">PutParquet processor</a>. <a href="https://nifi.apache.org/docs/nifi-docs/components/org.apache.nifi/nifi-parquet-nar/1.15.3/org.apache.nifi.processors.parquet.PutParquet/index.html">Description of PutParquet processor</a>
 
 ### RecordEditSchema
-<p align="center"><a href="RecordEditSchema.png"><img src="images/RecordEditSchema.png" width="600" /></a></p>
+<p align="center"><a href="images/RecordEditSchema.png"><img src="images/RecordEditSchema.png" width="600" /></a></p>
 
 Description: Updates the contents of a FlowFile that contains Record-oriented data (i.e., data that can be read via a RecordReader and written by a RecordWriter). This Processor requires that at least one user-defined Property be added. The name of the Property should indicate a RecordPath that determines the field that should be updated. The value of the Property is either a replacement value (optionally making use of the Expression Language) or is itself a RecordPath that extracts a value from the Record. Whether the Property value is determined to be a RecordPath or a literal value depends. User-defined properties values must contain new data type for record field. Use 'drop' or empty string for remove field from record.
 
