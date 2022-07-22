@@ -1,4 +1,4 @@
-package com.isgneuro.nifi.tools;
+package com.isgneuro.nifi.tools.bloom;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -12,8 +12,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.unbescape.html.HtmlEscape;
 
 public class StringSegmenter {
-    public String DEFAULT_TOKENIZE_STR = "\r\n\t[]<>(){}\\\"«»'`.,;!?-+*/^&@$#%_:= ";
-    public int DEFAULT_MIN_TOKEN_LENGTH = 3;
+    public static String DEFAULT_TOKENIZE_STR = "\r\n\t[]<>(){}\\\"«»'`.,;!?-+*/^&@$#%_:= ";
+    public static int DEFAULT_MIN_TOKEN_LENGTH = 3;
+    public static boolean DEFAULT_FILTER_NUMERIC_TOKENS = false;
     ArrayList<String> regexpList = new ArrayList<>();
     private final String tokenizeStr;
     private final boolean filterNumericTokens;
@@ -27,33 +28,23 @@ public class StringSegmenter {
         addDefaultRegexStr();
     }
 
-    public StringSegmenter(String tokenizeStr, boolean filterNumericTokens){
-        this.tokenizeStr = tokenizeStr;
-        this.minTokenLength = DEFAULT_MIN_TOKEN_LENGTH;
-        this.filterNumericTokens = filterNumericTokens;
-        addDefaultRegexStr();
+    public StringSegmenter(){
+        this(DEFAULT_TOKENIZE_STR, DEFAULT_FILTER_NUMERIC_TOKENS, DEFAULT_MIN_TOKEN_LENGTH);
     }
 
     public StringSegmenter(String tokenizeStr){
-        this.tokenizeStr = tokenizeStr;
-        this.minTokenLength = DEFAULT_MIN_TOKEN_LENGTH;
-        this.filterNumericTokens = false;
-        addDefaultRegexStr();
+        this(tokenizeStr, DEFAULT_FILTER_NUMERIC_TOKENS, DEFAULT_MIN_TOKEN_LENGTH);
+    }
+
+    public StringSegmenter(String tokenizeStr, boolean filterNumericTokens){
+        this(tokenizeStr, filterNumericTokens, DEFAULT_MIN_TOKEN_LENGTH);
     }
 
     public StringSegmenter(boolean filterNumericTokens, int minTokenLength){
-        this.tokenizeStr = DEFAULT_TOKENIZE_STR;
-        this.minTokenLength = minTokenLength;
-        this.filterNumericTokens = filterNumericTokens;
-        addDefaultRegexStr();
+        this(DEFAULT_TOKENIZE_STR, filterNumericTokens, minTokenLength);
     }
 
-    public StringSegmenter(){
-        this.tokenizeStr = DEFAULT_TOKENIZE_STR;
-        this.minTokenLength = DEFAULT_MIN_TOKEN_LENGTH;
-        this.filterNumericTokens = false;
-        addDefaultRegexStr();
-    }
+
 
     private void addDefaultRegexStr(){
         // word-word

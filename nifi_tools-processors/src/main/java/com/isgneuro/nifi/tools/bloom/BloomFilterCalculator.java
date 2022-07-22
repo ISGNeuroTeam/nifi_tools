@@ -1,7 +1,6 @@
 package com.isgneuro.nifi.tools.bloom;
 
 import com.google.common.collect.ImmutableMap;
-import com.isgneuro.nifi.tools.StringSegmenter;
 import org.apache.nifi.annotation.behavior.InputRequirement;
 import org.apache.nifi.annotation.behavior.Stateful;
 import org.apache.nifi.annotation.behavior.TriggerWhenEmpty;
@@ -100,18 +99,35 @@ public class BloomFilterCalculator extends AbstractProcessor {
             .description("Name of bloom file")
             .required(false)
             .build();
+
+    static final PropertyDescriptor MAX_WRITE_RETRIES = new PropertyDescriptor.Builder()
+            .name("Max write retries")
+            .defaultValue("3")
+            .addValidator(StandardValidators.NON_BLANK_VALIDATOR)
+            .description("Maximum number of bloom filter file write retries on error")
+            .required(false)
+            .build();
+
+    static final PropertyDescriptor TOKENIZER_STR = new PropertyDescriptor.Builder()
+            .name("Tokenizer string")
+            .defaultValue(StringSegmenter.DEFAULT_TOKENIZE_STR)
+            .addValidator(StandardValidators.NON_BLANK_VALIDATOR)
+            .description("The set of characters by which the string is split into tokens")
+            .required(false)
+            .build();
+
     static final PropertyDescriptor FILTER_NUMERIC_TOKENS = new PropertyDescriptor.Builder()
             .name("Filter numeric tokens")
             .description("If set to 'true', bloom tokens that are numbers will be removed")
             .required(false)
-            .defaultValue("false")
+            .defaultValue(String.valueOf(StringSegmenter.DEFAULT_FILTER_NUMERIC_TOKENS))
             .allowableValues(new String[]{"true","false"})
             .build();
 
     static final PropertyDescriptor MIN_TOKEN_LENGTH = new PropertyDescriptor.Builder()
             .name("Minimal token length")
             .description("shorter tokens will not be added to the bloom filter")
-            .defaultValue("3")
+            .defaultValue(String.valueOf(StringSegmenter.DEFAULT_MIN_TOKEN_LENGTH))
             .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
             .required(false)
             .build();
@@ -135,14 +151,17 @@ public class BloomFilterCalculator extends AbstractProcessor {
     private Set<Relationship> relationships;
 
     private BloomFiltersInfo bloomFilters;
-    private String bloomFilename;
+
     private Long expectedNumTokens;
-    private Long timeGap;
     private Double fpp;
-    private Boolean saveTokens;
+    private Long timeGap;
+    private String bloomFilename;
+    private Integer maxWriteRetries;
+    private String tokenizerStr;
     private Boolean filterNumericTokens;
-    private String tokensFileName;
     private Integer minTokenLength;
+    private Boolean saveTokens;
+    private String tokensFileName;
 
     @Override
     protected void init(final ProcessorInitializationContext context) {
@@ -153,6 +172,8 @@ public class BloomFilterCalculator extends AbstractProcessor {
         properties.add(FALSE_POSITIVE_PROBABILITY);
         properties.add(TIME_GAP);
         properties.add(BLOOM_FILE_NAME);
+        properties.add(MAX_WRITE_RETRIES);
+        properties.add(TOKENIZER_STR);
         properties.add(FILTER_NUMERIC_TOKENS);
         properties.add(MIN_TOKEN_LENGTH);
         properties.add(SAVE_TOKENS);
@@ -180,8 +201,10 @@ public class BloomFilterCalculator extends AbstractProcessor {
         this.timeGap = context.getProperty(TIME_GAP).asTimePeriod(TimeUnit.MILLISECONDS);
         this.bloomFilters = new BloomFiltersInfo(this.timeGap);
         this.bloomFilename = context.getProperty(BLOOM_FILE_NAME).getValue();
+        this.maxWriteRetries = context.getProperty(MAX_WRITE_RETRIES).asInteger();
         this.expectedNumTokens = context.getProperty(EXPECTED_NUM_TOKENS).asLong();
         this.fpp = context.getProperty(FALSE_POSITIVE_PROBABILITY).asDouble();
+        this.tokenizerStr = context.getProperty(TOKENIZER_STR).getValue();
         this.minTokenLength = context.getProperty(MIN_TOKEN_LENGTH).asInteger();
         this.saveTokens = context.getProperty(SAVE_TOKENS).asBoolean();
         this.filterNumericTokens = context.getProperty(FILTER_NUMERIC_TOKENS).asBoolean();
@@ -224,9 +247,9 @@ public class BloomFilterCalculator extends AbstractProcessor {
 
         try {
             String id = context.getProperty(BUCKET_ID_VALUE).evaluateAttributeExpressions(flowFile).getValue();
-            getLogger().info("Processing flowfile with bucket-id {}", id);
-            BloomFilter bloomFilter = calcBloom(flowFile, context,session);
-            updateBloom(id, bloomFilter);
+            getLogger().info("Processing flow file with bucket-id {}", id);
+            BloomWithTokens bloomWithTokens = calcBloom(flowFile, context, session);
+            updateBloom(id, bloomWithTokens);
             session.transfer(flowFile, REL_SUCCESS);
         } catch (Exception e) {
             getLogger().error(e.getMessage(), e);
@@ -259,13 +282,15 @@ public class BloomFilterCalculator extends AbstractProcessor {
         stateManager.setState(ImmutableMap.copyOf(stateMap), Scope.CLUSTER);
     }
 
-    private void updateBloom(String id, BloomFilter curBloom){
+    private void updateBloom(String id, BloomWithTokens curBloom){
         BloomWithStopWatch bloomInfo = bloomFilters.get(id);
         if (bloomInfo != null) {
             try {
-                bloomInfo.getBloomFilter().mergeInPlace(curBloom);
+                bloomInfo.getBloomWithTokens().getBloomFilter().mergeInPlace(curBloom.getBloomFilter());
+                bloomInfo.getBloomWithTokens().getBloomTokens().addAll(curBloom.getBloomTokens());
+
             } catch (IncompatibleMergeException e) {
-                e.printStackTrace();
+                getLogger().error("Error while merging bloom filter (when updating): {}", e.getMessage());
             }
             bloomInfo.getStopWatch().stop();
         } else {
@@ -275,72 +300,69 @@ public class BloomFilterCalculator extends AbstractProcessor {
         bloomFilters.put(id, bloomInfo);
     }
 
-    protected BloomFilter calcBloom(FlowFile flowFile, ProcessContext context, ProcessSession session) {
+    protected BloomWithTokens calcBloom(FlowFile flowFile, ProcessContext context, ProcessSession session) {
         try (InputStream is = session.read(flowFile)) {
             String pathToDir = context.getProperty(BUCKET_ID_VALUE).evaluateAttributeExpressions(flowFile).getValue();
             RecordReaderFactory factory = context.getProperty(RECORD_READER).asControllerService(RecordReaderFactory.class);
             RecordReader reader = factory.createRecordReader(flowFile, is, getLogger());
-
-            BloomFilter retVal = BloomFilter.create(expectedNumTokens, fpp);
-            Record record;
-            StringSegmenter parser = new StringSegmenter(filterNumericTokens, minTokenLength);
+            StringSegmenter parser = new StringSegmenter(tokenizerStr, filterNumericTokens, minTokenLength);
             Set<String> tokens = new HashSet<>();
+            Record record;
             while ((record = reader.nextRecord()) != null) {
                 String curRaw = record.getAsString("_raw");
                 tokens.addAll(parser.parseString(curRaw));
             }
-            if (!tokens.isEmpty()){
-                tokens.forEach(retVal::put);
-                if (saveTokens) {
-                    if (Files.isDirectory(Paths.get(pathToDir))) {
-                        if (Files.isRegularFile(Paths.get(pathToDir, tokensFileName))) {
-                            try (BufferedReader bufferedReader = Files.newBufferedReader(new File(pathToDir, tokensFileName).toPath(), StandardCharsets.UTF_8)) {
-                                bufferedReader.lines().forEach(tokens::add);
-                            }
-                        }
-                        // BufferWriter default options CREATE, TRUNCATE_EXISTING, and WRITE
-                        try (BufferedWriter bufferedWriter = Files.newBufferedWriter(new File(pathToDir, tokensFileName).toPath(), StandardCharsets.UTF_8)) {
-                            tokens.forEach(line -> {
-                                try {
-                                    bufferedWriter.write(line);
-                                    bufferedWriter.newLine();
-                                } catch (IOException e) {
-                                    throw new UncheckedIOException(e);
-                                }
-                            });
-                            bufferedWriter.flush();
-                        }
-                    }
-                }
-            }
-            return retVal;
+            return new BloomWithTokens(BloomFilter.create(expectedNumTokens, fpp), tokens);
         } catch (Exception e) {
-            getLogger().error("Could not read flowfile", e);
+            getLogger().error("Could not read flow file", e);
             throw new ProcessException(e);
         }
     }
 
-    private void writeBloom(String pathToDir, BloomFilter bloomFilter) throws Exception {
+    private void writeBloom(String pathToDir, BloomWithTokens bloomFilterWithTokens) throws Exception {
         if (Files.isDirectory(Paths.get(pathToDir))) {
             if (Files.isRegularFile(Paths.get(pathToDir, bloomFilename))) {
                 try (FileInputStream fis = new FileInputStream(new File(pathToDir, bloomFilename))) {
-                    bloomFilter.mergeInPlace(BloomFilter.readFrom(fis));
-                } catch (EOFException e) {
-                    getLogger().error("Error while merging bloom filter: {}", e.getMessage());
+                    // merging filters
+                    bloomFilterWithTokens.getBloomFilter().mergeInPlace(BloomFilter.readFrom(fis));
+                    // merging tokens
+                    if (saveTokens) {
+                        if (Files.isRegularFile(Paths.get(pathToDir, tokensFileName))) {
+                            try (BufferedReader bufferedReader = Files.newBufferedReader(
+                                    new File(pathToDir, tokensFileName).toPath(), StandardCharsets.UTF_8)) {
+                                bufferedReader.lines().forEach(bloomFilterWithTokens.getBloomTokens()::add);
+                            }
+                        }
+                    }
+                } catch (IncompatibleMergeException e) {
+                    getLogger().error("Error while merging bloom filter (when writing): {}", e.getMessage());
                 }
             }
 
             try (OutputStream os = Files.newOutputStream(new File(pathToDir, bloomFilename).toPath())) {
-                int MAX_RETRIES = 5;
-                for (int i = 0; i <= MAX_RETRIES; i++) {
+                for (int i = 0; i <= maxWriteRetries; i++) {
                     try {
-                        bloomFilter.writeTo(os);
+                        bloomFilterWithTokens.getBloomFilter().writeTo(os);
+                        if (saveTokens) {
+                            try (BufferedWriter bufferedWriter = Files.newBufferedWriter(
+                                    new File(pathToDir, tokensFileName).toPath(), StandardCharsets.UTF_8)) {
+                                bloomFilterWithTokens.getBloomTokens().forEach(line -> {
+                                    try {
+                                        bufferedWriter.write(line);
+                                        bufferedWriter.newLine();
+                                    } catch (IOException e) {
+                                        throw new UncheckedIOException(e);
+                                    }
+                                });
+                                bufferedWriter.flush();
+                            }
+                        }
                         break;
                     }
                     catch (Exception e) {
                         getLogger().error("Error when writing bloom to disk: {}. Try one more time...", e.getMessage());
                         Thread.sleep(1000);
-                        if (i == MAX_RETRIES) {
+                        if (i == maxWriteRetries) {
                             getLogger().error(
                                     "Error when writing bloom to disk: {}. Bloom data will be erased for bucket {}", e.getMessage(), pathToDir);
                             throw e;

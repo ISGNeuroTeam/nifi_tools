@@ -18,19 +18,19 @@ public class BloomFiltersInfo {
         this.timeFrameMilliseconds = timeframeMilliseconds;
     }
 
-    Map<String, BloomFilter> getAll(){
-        return bloomFilters.entrySet().stream().collect(Collectors.toMap(r -> r.getKey(), r-> r.getValue().getBloomFilter()));
+    Map<String, BloomWithTokens> getAll(){
+        return bloomFilters.entrySet().stream().collect(Collectors.toMap(r -> r.getKey(), r-> r.getValue().getBloomWithTokens()));
     }
 
-    Map<String, BloomFilter> getElapsed(){
+    Map<String, BloomWithTokens> getElapsed(){
         List<String> elapsed =  bloomFilters.entrySet().stream()
                 .filter(w -> w.getValue().getStopWatch().getElapsed(TimeUnit.MILLISECONDS) >= timeFrameMilliseconds)
                 .map(w -> w.getKey())
                 .collect(Collectors.toList());
-        Map<String, BloomFilter> res = elapsed.stream()
+        Map<String, BloomWithTokens> res = elapsed.stream()
                 .map(e ->{
                     BloomWithStopWatch bloomInfo = bloomFilters.remove(e);
-                    return new AbstractMap.SimpleImmutableEntry<>(e, bloomInfo != null ?  bloomInfo.getBloomFilter() : null);
+                    return new AbstractMap.SimpleImmutableEntry<>(e, bloomInfo != null ?  bloomInfo.getBloomWithTokens() : null);
                 })
                 .filter(e -> e.getValue() != null)
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
