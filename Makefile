@@ -38,7 +38,7 @@ build:
 	$(SET_VERSION)
 	$(SET_PROJECT_NAME)
 	$(SET_PROJECT_NAME_LOW_CASE)
-	mvn clean install
+	mvn clean install -U -X
 	mkdir build
 	mkdir build/$(PROJECT_NAME)
 	cp $(PROJECT_NAME)-nar/target/$(PROJECT_NAME)-nar-$(VERSION).nar  build/$(PROJECT_NAME)/
