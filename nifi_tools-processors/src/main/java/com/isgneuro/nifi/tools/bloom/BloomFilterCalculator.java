@@ -126,7 +126,7 @@ public class BloomFilterCalculator extends AbstractProcessor {
 
     static final PropertyDescriptor MIN_TOKEN_LENGTH = new PropertyDescriptor.Builder()
             .name("Minimal token length")
-            .description("shorter tokens will not be added to the bloom filter")
+            .description("Shorter tokens will not be added to the bloom filter")
             .defaultValue(String.valueOf(StringSegmenter.DEFAULT_MIN_TOKEN_LENGTH))
             .addValidator(StandardValidators.POSITIVE_INTEGER_VALIDATOR)
             .required(false)
