@@ -25,6 +25,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.java.version>1.8</project.java.version>
 		<nifi.version>1.15.3</nifi.version>
 		<slf4j.version>1.7.36</slf4j.version>
 		<hadoop.version>2.9.2</hadoop.version>
