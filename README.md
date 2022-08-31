@@ -5,7 +5,7 @@ This repository contains custom processors designed for Apache Ni-Fi. These proc
 Processors group name
 
 ```
-com.isgneuro.etl
+com.isgneuro.nifi
 ```
 
 Contains processors:
@@ -48,7 +48,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 Mikhail Rubashenkov (mikhail@isgneuro.com)   
 Dmitriy Gusarov (dgusarov@isgneuro.com)  
-Nizam Keramov (nkeramov@isgneuro.com, nkeramov@isgneuro.ru)  
+Nizam Keramov (nkeramov@isgneuro.com)  
 
 ## License
 
