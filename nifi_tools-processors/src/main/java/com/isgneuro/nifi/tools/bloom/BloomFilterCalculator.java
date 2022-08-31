@@ -121,7 +121,7 @@ public class BloomFilterCalculator extends AbstractProcessor {
             .description("If set to 'true', bloom tokens that are numbers will be removed")
             .required(false)
             .defaultValue(String.valueOf(StringSegmenter.DEFAULT_FILTER_NUMERIC_TOKENS))
-            .allowableValues(new String[]{"true","false"})
+            .allowableValues("true","false")
             .build();
 
     static final PropertyDescriptor MIN_TOKEN_LENGTH = new PropertyDescriptor.Builder()
@@ -136,7 +136,7 @@ public class BloomFilterCalculator extends AbstractProcessor {
             .description("If set to 'true', bloom tokens will be written to separate txt file (bloom file name with txt extension)")
             .required(false)
             .defaultValue("false")
-            .allowableValues(new String[]{"true","false"})
+            .allowableValues("true","false")
             .build();
     static final Relationship REL_SUCCESS = new Relationship.Builder()
             .description("All FlowFiles that was putted to BloomFilter are routed to this relationship")
@@ -178,7 +178,6 @@ public class BloomFilterCalculator extends AbstractProcessor {
         properties.add(MIN_TOKEN_LENGTH);
         properties.add(SAVE_TOKENS);
         this.properties = Collections.unmodifiableList(properties);
-
         final Set<Relationship> relationships = new HashSet<>();
         relationships.add(REL_SUCCESS);
         relationships.add(REL_FAILURE);
@@ -302,7 +301,6 @@ public class BloomFilterCalculator extends AbstractProcessor {
 
     protected BloomWithTokens calcBloom(FlowFile flowFile, ProcessContext context, ProcessSession session) {
         try (InputStream is = session.read(flowFile)) {
-            String pathToDir = context.getProperty(BUCKET_ID_VALUE).evaluateAttributeExpressions(flowFile).getValue();
             RecordReaderFactory factory = context.getProperty(RECORD_READER).asControllerService(RecordReaderFactory.class);
             RecordReader reader = factory.createRecordReader(flowFile, is, getLogger());
             StringSegmenter parser = new StringSegmenter(tokenizerStr, filterNumericTokens, minTokenLength);

@@ -69,7 +69,7 @@ public class PutParquetNoAvro extends AbstractPutHDFSRecord {
             .build();
 
     public static final PropertyDescriptor ADD_SPARK_META = new PropertyDescriptor.Builder()
-            .name("make-spark-mets")
+            .name("make-spark-meta")
             .displayName("Make spark meta")
             .description("Processor adds spark schema to meta in Parquet file if set to true")
             .allowableValues("true", "false")

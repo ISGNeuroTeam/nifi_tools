@@ -47,29 +47,17 @@
 			<version>${nifi.version}</version>
 			<scope>provided</scope>
 		</dependency>
-
-
 		<dependency>
 			<groupId>org.apache.nifi</groupId>
 			<artifactId>nifi-commons</artifactId>
 			<version>${nifi.version}</version>
 			<type>pom</type>
 		</dependency>
-
 		<dependency>
 			<groupId>org.apache.nifi</groupId>
 			<artifactId>nifi-parquet-processors</artifactId>
 			<version>${nifi.version}</version>
 		</dependency>
-
-		<!--
-		<dependency>
-		    <groupId>org.xerial.snappy</groupId>
-		    <artifactId>snappy-java</artifactId>
-		    <version>1.1.8.4</version>
-		</dependency>
-			 -->
-
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>log4j-over-slf4j</artifactId>
@@ -78,13 +66,10 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>jcl-over-slf4j</artifactId>
 		</dependency>
-
-
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-common</artifactId>
 			<version>${hadoop.version}</version>
-
 			<exclusions>
 				<exclusion>
 					<groupId>commons-logging</groupId>
@@ -99,9 +84,7 @@
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
-			<version>2.9.2</version>
-			<!--<scope>provided</scope>-->
-
+			<version>${hadoop.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -111,7 +94,6 @@
 					<groupId>log4j</groupId>
 					<artifactId>log4j</artifactId>
 				</exclusion>
-
 				<exclusion>
 					<groupId>com.fasterxml.jackson.core</groupId>
 					<artifactId>jackson-databind</artifactId>
@@ -120,11 +102,8 @@
 					<groupId>commons-logging</groupId>
 					<artifactId>commons-logging</artifactId>
 				</exclusion>
-
 			</exclusions>
-
 		</dependency>
-
 		<dependency>
 			<groupId>org.apache.nifi</groupId>
 			<artifactId>nifi-record</artifactId>
@@ -181,20 +160,16 @@
 			<artifactId>json-flattener</artifactId>
 			<version>0.6.0</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.unbescape</groupId>
 			<artifactId>unbescape</artifactId>
 			<version>1.1.6.RELEASE</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.nimbusds</groupId>
 			<artifactId>nimbus-jose-jwt</artifactId>
 			<version>9.22</version>
 		</dependency>
-
-
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
